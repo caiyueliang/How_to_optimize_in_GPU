@@ -7,9 +7,11 @@ __global__ void MatAdd(float A[N][N], float B[N][N], float C[N][N])
         C[i][j] = A[i][j] + B[i][j];
 }
 
+// 运行不起来：变量A、B、C、N未设置
 int main()
 {
     // Kernel 线程配置
+
     dim3 threadsPerBlock(16, 16);
     dim3 numBlocks(N / threadsPerBlock.x, N / threadsPerBlock.y);
     // kernel调用
