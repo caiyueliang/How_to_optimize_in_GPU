@@ -10,3 +10,5 @@ __global__ void add(float* x, float * y, float* z, int n)  // x,y,z 是指针，
         z[i] = x[i] + y[i];
     }
 }
+
+
