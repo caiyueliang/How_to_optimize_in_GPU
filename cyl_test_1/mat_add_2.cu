@@ -14,9 +14,10 @@ __global__ void add(float* x, float * y, float* z, int n)  // x,y,z 是指针，
         printf("blockDim.x:%d * gridDim.x:%d = stride:%d\n", 
             blockDim.x, gridDim.x, stride);
     }
-    for (int i = index; i < n; i += stride) {
-        z[i] = x[i] + y[i];
-    }
+    // for (int i = index; i < n; i += stride) {
+    //     z[i] = x[i] + y[i];
+    // }
+    z[index] = x[index] + y[index];
 }
 
 int main(int argc, char **argv)
