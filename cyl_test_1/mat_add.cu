@@ -1,4 +1,5 @@
 #include <iostream>
+#include <chrono>
 
 // 两个向量加法kernel，grid和block均为一维
 __global__ void add(float* x, float * y, float* z, int n)  // x,y,z 是指针，所以可以返回内容
@@ -45,8 +46,19 @@ int main()
     // 定义kernel的执行配置
     dim3 blockSize(256);
     dim3 gridSize((N + blockSize.x - 1) / blockSize.x);
+
+    // 获取第一个时间点
+    auto start = std::chrono::high_resolution_clock::now();
+
     // 执行kernel
     add << < gridSize, blockSize >> >(d_x, d_y, d_z, N);
+
+    // 获取第二个时间点
+    auto end = std::chrono::high_resolution_clock::now();
+    // 计算时间差
+    std::chrono::duration<double, std::milli> duration = end - start;
+    // 输出结果
+    std::cout << "Time taken: " << duration.count() << " milliseconds." << std::endl;
 
     // 将device得到的结果拷贝到host
     cudaMemcpy((void*)z, (void*)d_z, nBytes, cudaMemcpyDeviceToHost);
