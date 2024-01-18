@@ -8,8 +8,13 @@ __global__ void add(float* x, float * y, float* z, int n)  // x,y,z 是指针，
     int index = threadIdx.x + blockIdx.x * blockDim.x;
     // 步长
     int stride = blockDim.x * gridDim.x;
-    for (int i = index; i < n; i += stride)
-    {
+    if (index % (1 << 20) == 0) {
+        printf("threadIdx.x:%d + blockIdx.x:%d * blockDim.x:%d = index:%d\n", 
+            threadIdx.x, blockIdx.x, blockDim.x, index);
+        printf("blockDim.x:%d * gridDim.x:%d = stride:%d\n", 
+            blockDim.x, gridDim.x, stride);
+    }
+    for (int i = index; i < n; i += stride) {
         z[i] = x[i] + y[i];
     }
 }
