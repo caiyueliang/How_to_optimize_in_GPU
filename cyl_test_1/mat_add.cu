@@ -1,25 +1,5 @@
 #include <iostream>
 
-// // Kernel定义
-// __global__ void MatAdd(float A[N][N], float B[N][N], float C[N][N])
-// {
-//     int i = blockIdx.x * blockDim.x + threadIdx.x;
-//     int j = blockIdx.y * blockDim.y + threadIdx.y;
-//     if (i < N && j < N)
-//         C[i][j] = A[i][j] + B[i][j];
-// }
-
-// // 运行不起来：变量A、B、C、N未设置
-// int main()
-// {
-//     // Kernel 线程配置
-
-//     dim3 threadsPerBlock(16, 16);
-//     dim3 numBlocks(N / threadsPerBlock.x, N / threadsPerBlock.y);
-//     // kernel调用
-//     MatAdd<<<numBlocks, threadsPerBlock>>>(A, B, C);
-// }
-
 // 两个向量加法kernel，grid和block均为一维
 __global__ void add(float* x, float * y, float* z, int n)  // x,y,z 是指针，所以可以返回内容
 {
@@ -37,7 +17,7 @@ int main()
 {
     int N = 1 << 20;
     int nBytes = N * sizeof(float);
-    std::cout << "nBytes: " << nBytes << std::endl;
+    std::cout << "N: " << N << "; nBytes: " << nBytes << std::endl;
 
     // 申请host内存
     float *x, *y, *z;
