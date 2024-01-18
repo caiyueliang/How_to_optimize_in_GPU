@@ -46,6 +46,7 @@ int main()
     // 定义kernel的执行配置
     dim3 blockSize(256);
     dim3 gridSize((N + blockSize.x - 1) / blockSize.x);
+    std::cout << "blockSize: " << blockSize << "; gridSize: " << gridSize << std::endl;
 
     // 获取第一个时间点
     auto start = std::chrono::high_resolution_clock::now();
@@ -58,7 +59,7 @@ int main()
     // 计算时间差
     std::chrono::duration<double, std::milli> duration = end - start;
     // 输出结果
-    std::cout << "Time taken: " << duration.count() << " milliseconds." << std::endl;
+    std::cout << "计算耗时: " << duration.count() << " milliseconds." << std::endl;
 
     // 将device得到的结果拷贝到host
     cudaMemcpy((void*)z, (void*)d_z, nBytes, cudaMemcpyDeviceToHost);
