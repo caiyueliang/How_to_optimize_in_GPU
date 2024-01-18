@@ -46,7 +46,9 @@ int main()
     // 定义kernel的执行配置
     dim3 blockSize(256);
     dim3 gridSize((N + blockSize.x - 1) / blockSize.x);
-    std::cout << "blockSize: " << blockSize << "; gridSize: " << gridSize << std::endl;
+    // std::cout << "blockSize: " << blockSize << "; gridSize: " << gridSize << std::endl;
+    printf("Grid : {%d, %d, %d} blocks. Blocks : {%d, %d, %d} threads.\n",
+        gridSize.x, gridSize.y, gridSize.z, blockSize.x, blockSize.y, blockSize.z);
 
     // 获取第一个时间点
     auto start = std::chrono::high_resolution_clock::now();
