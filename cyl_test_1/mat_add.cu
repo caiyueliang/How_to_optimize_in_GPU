@@ -14,8 +14,18 @@ __global__ void add(float* x, float * y, float* z, int n)  // x,y,z 是指针，
     }
 }
 
-int main()
+int main(int argc, char **argv)
 {
+    // 检查是否有足够的命令行参数
+    if (argc < 2) {
+        std::cerr << "Usage: " << argv[0] << " <block_size>" << std::endl;
+        return 1;
+    }
+
+    // 获取并打印传入的参数
+    int block_size = std::atoi(argv[1]);
+    std::cout << "Parameter [block_size]: " << block_size << std::endl;
+
     int N = 1 << 20;
     int nBytes = N * sizeof(float);
     std::cout << "N: " << N << "; nBytes: " << nBytes << std::endl;
@@ -44,7 +54,7 @@ int main()
     cudaMemcpy((void*)d_y, (void*)y, nBytes, cudaMemcpyHostToDevice);
 
     // 定义kernel的执行配置
-    dim3 blockSize(256);
+    dim3 blockSize(block_size);
     dim3 gridSize((N + blockSize.x - 1) / blockSize.x);
     // std::cout << "blockSize: " << blockSize << "; gridSize: " << gridSize << std::endl;
     printf("Grid : {%d, %d, %d} blocks. Blocks : {%d, %d, %d} threads.\n",
