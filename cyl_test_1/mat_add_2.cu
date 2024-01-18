@@ -1,64 +1,109 @@
-#include<math.h>
-#include<stdio.h>
+#include <iostream>
+#include <chrono>
 
-const double EPSILON=1.0e-15;
-const double a=1.23;
-const double b=2.34;
-const double c=3.57;
-
-void __global__ add(const double *x,const double *y,double *z);
-void check(const double *z,const int N);
-
-int main(void)
+// 两个向量加法kernel，grid和block均为一维
+__global__ void add(float* x, float * y, float* z, int n)  // x,y,z 是指针，所以可以返回内容
 {
-        const int N=100000000;
-        const int M=sizeof(double) * N;
-        double *h_x=(double*)malloc(M);
-        double *h_y=(double*)malloc(M);
-        double *h_z=(double*)malloc(M);
-        for(int n=0;n<N;++n)
-        {
-           h_x[n]=a;
-           h_y[n]=b;
-        }
-        double *d_x,*d_y,*d_z;
-        cudaMalloc((void **)&d_x,M);
-        cudaMalloc((void **)&d_y,M);
-        cudaMalloc((void **)&d_z,M);
-
-        cudaMemcpy(d_x,h_x,M,cudaMemcpyHostToDevice);
-        cudaMemcpy(d_y,h_y,M,cudaMemcpyHostToDevice);
-        const int block_size=128;
-        const int grid_size=N/block_size;
-        add<<<grid_size, block_size>>>(d_x,d_y,d_z);
-        cudaMemcpy(h_z,d_z,M,cudaMemcpyHostToDevice);
-        check(h_z,N);
-
-        free(h_x);
-        free(h_y);
-        free(h_z);
-
-        cudaFree(d_x);
-        cudaFree(d_y);
-        cudaFree(d_z);
-        return 0;
+    // 获取全局索引
+    int index = threadIdx.x + blockIdx.x * blockDim.x;
+    // 步长
+    int stride = blockDim.x * gridDim.x;
+    for (int i = index; i < n; i += stride)
+    {
+        z[i] = x[i] + y[i];
+    }
 }
 
-void __global__ add(const double *x,const double *y,double *z)
+int main(int argc, char **argv)
 {
-        const int n = blockDim.x * blockIdx.x + threadIdx.x;
-        z[n]=x[n]+y[n];
-}
+    // 检查是否有足够的命令行参数
+    if (argc < 3) {
+        std::cerr << "Usage: " << argv[0] << " <block_size> <epoch>" << std::endl;
+        return 1;
+    }
 
-void check(const double *z,const int N)
-{
-        bool has_error=false;
-        for(int n=0;n<N;++n)
-        {
-           if(fabs(z[n]-c)>EPSILON)
-           {
-                has_error =true;
-           }
-          printf("%s\n",has_error?"Has errors":"No errors");
-        }
+    // 获取并打印传入的参数
+    int block_size = std::atoi(argv[1]);
+    int epoch = std::atoi(argv[2]);
+    std::cout << "Parameter [block_size]: " << block_size << std::endl;
+    std::cout << "Parameter [epoch]: " << epoch << std::endl;
+
+
+    int N = 1 << 23;
+    int nBytes = N * sizeof(float);
+    std::cout << "N: " << N << "; nBytes: " << nBytes << std::endl;
+
+    // 申请host内存
+    // float *x, *y, *z;
+    // x = (float*)malloc(nBytes);
+    // y = (float*)malloc(nBytes);
+    // z = (float*)malloc(nBytes);
+    // 申请托管内存
+    float *x, *y, *z;
+    cudaMallocManaged((void**)&x, nBytes);
+    cudaMallocManaged((void**)&y, nBytes);
+    cudaMallocManaged((void**)&z, nBytes);
+
+    // 初始化数据
+    for (int i = 0; i < N; ++i)
+    {
+        x[i] = 10.0;
+        y[i] = 20.0;
+    }
+
+    // 申请device内存
+    // float *d_x, *d_y, *d_z;
+    // cudaMalloc((void**)&d_x, nBytes);
+    // cudaMalloc((void**)&d_y, nBytes);
+    // cudaMalloc((void**)&d_z, nBytes);
+
+    // // 将host数据拷贝到device
+    // cudaMemcpy((void*)d_x, (void*)x, nBytes, cudaMemcpyHostToDevice);
+    // cudaMemcpy((void*)d_y, (void*)y, nBytes, cudaMemcpyHostToDevice);
+
+    // 定义kernel的执行配置
+    dim3 blockSize(block_size);
+    dim3 gridSize((N + blockSize.x - 1) / blockSize.x);
+    // std::cout << "blockSize: " << blockSize << "; gridSize: " << gridSize << std::endl;
+    printf("Grid : {%d, %d, %d} blocks. Blocks : {%d, %d, %d} threads.\n",
+        gridSize.x, gridSize.y, gridSize.z, blockSize.x, blockSize.y, blockSize.z);
+
+    // 获取第一个时间点
+    auto start = std::chrono::high_resolution_clock::now();
+
+    // 执行kernel
+    for (int i = 0; i < epoch; i++) {
+        add << < gridSize, blockSize >> >(d_x, d_y, d_z, N);
+    }
+
+    // 获取第二个时间点
+    auto end = std::chrono::high_resolution_clock::now();
+    // 计算时间差
+    std::chrono::duration<double, std::milli> duration = end - start;
+    // 输出结果
+    std::cout << "计算耗时: " << duration.count() << " milliseconds." << std::endl;
+
+        
+    // // 将device得到的结果拷贝到host
+    // cudaMemcpy((void*)z, (void*)d_z, nBytes, cudaMemcpyDeviceToHost);
+    // 同步device 保证结果能正确访问
+    cudaDeviceSynchronize();
+
+    // 检查执行结果
+    float maxError = 0.0;
+    for (int i = 0; i < N; i++) {
+        maxError = fmax(maxError, fabs(z[i] - 30.0));
+    }
+    std::cout << "最大误差: " << maxError << std::endl;
+
+    // 释放device内存
+    cudaFree(x);
+    cudaFree(y);
+    cudaFree(z);
+    // // 释放host内存
+    // free(x);
+    // free(y);
+    // free(z);
+
+    return 0;
 }
