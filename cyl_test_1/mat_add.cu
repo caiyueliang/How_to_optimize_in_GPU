@@ -29,7 +29,7 @@ int main(int argc, char **argv)
     std::cout << "Parameter [epoch]: " << epoch << std::endl;
 
 
-    int N = 1 << 20;
+    int N = 1 << 23;
     int nBytes = N * sizeof(float);
     std::cout << "N: " << N << "; nBytes: " << nBytes << std::endl;
 
