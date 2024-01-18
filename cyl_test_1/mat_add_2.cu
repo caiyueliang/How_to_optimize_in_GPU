@@ -73,7 +73,7 @@ int main(int argc, char **argv)
 
     // 执行kernel
     for (int i = 0; i < epoch; i++) {
-        add << < gridSize, blockSize >> >(d_x, d_y, d_z, N);
+        add << < gridSize, blockSize >> >(x, y, z, N);
     }
 
     // 获取第二个时间点
