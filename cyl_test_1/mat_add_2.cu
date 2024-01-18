@@ -11,12 +11,29 @@ __global__ void add(float* x, float * y, float* z, int n)  // x,y,z 是指针，
     if (index % (1 << 20) == 0) {
         printf("threadIdx.x:%d + blockIdx.x:%d * blockDim.x:%d = index:%d\n", 
             threadIdx.x, blockIdx.x, blockDim.x, index);
-        printf("blockDim.x:%d * gridDim.x:%d = stride:%d\n", 
+        printf("blockDim.x:%d * gridDim.x:%d = stride:%d\n",
             blockDim.x, gridDim.x, stride);
+        // threadIdx.x:0 + blockIdx.x:0 * blockDim.x:512 = index:0
+        // threadIdx.x:0 + blockIdx.x:2048 * blockDim.x:512 = index:1048576
+        // threadIdx.x:0 + blockIdx.x:4096 * blockDim.x:512 = index:2097152
+        // threadIdx.x:0 + blockIdx.x:6144 * blockDim.x:512 = index:3145728
+        // threadIdx.x:0 + blockIdx.x:8192 * blockDim.x:512 = index:4194304
+        // threadIdx.x:0 + blockIdx.x:10240 * blockDim.x:512 = index:5242880
+        // threadIdx.x:0 + blockIdx.x:12288 * blockDim.x:512 = index:6291456
+        // threadIdx.x:0 + blockIdx.x:14336 * blockDim.x:512 = index:7340032
+        // blockDim.x:512 * gridDim.x:16384 = stride:8388608
+        // blockDim.x:512 * gridDim.x:16384 = stride:8388608
+        // blockDim.x:512 * gridDim.x:16384 = stride:8388608
+        // blockDim.x:512 * gridDim.x:16384 = stride:8388608
+        // blockDim.x:512 * gridDim.x:16384 = stride:8388608
+        // blockDim.x:512 * gridDim.x:16384 = stride:8388608
+        // blockDim.x:512 * gridDim.x:16384 = stride:8388608
+        // blockDim.x:512 * gridDim.x:16384 = stride:8388608
     }
     // for (int i = index; i < n; i += stride) {
     //     z[i] = x[i] + y[i];
     // }
+    // 用下面的指令也一样？
     z[index] = x[index] + y[index];
 }
 
