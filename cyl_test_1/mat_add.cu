@@ -1,3 +1,5 @@
+#include <iostream>
+
 // // Kernel定义
 // __global__ void MatAdd(float A[N][N], float B[N][N], float C[N][N])
 // {
