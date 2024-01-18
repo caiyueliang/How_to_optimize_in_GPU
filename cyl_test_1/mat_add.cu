@@ -17,14 +17,17 @@ __global__ void add(float* x, float * y, float* z, int n)  // x,y,z 是指针，
 int main(int argc, char **argv)
 {
     // 检查是否有足够的命令行参数
-    if (argc < 2) {
-        std::cerr << "Usage: " << argv[0] << " <block_size>" << std::endl;
+    if (argc < 3) {
+        std::cerr << "Usage: " << argv[0] << " <block_size> <epoch>" << std::endl;
         return 1;
     }
 
     // 获取并打印传入的参数
     int block_size = std::atoi(argv[1]);
+    int epoch = std::atoi(argv[2]);
     std::cout << "Parameter [block_size]: " << block_size << std::endl;
+    std::cout << "Parameter [epoch]: " << epoch << std::endl;
+
 
     int N = 1 << 20;
     int nBytes = N * sizeof(float);
@@ -64,7 +67,9 @@ int main(int argc, char **argv)
     auto start = std::chrono::high_resolution_clock::now();
 
     // 执行kernel
-    add << < gridSize, blockSize >> >(d_x, d_y, d_z, N);
+    for (int i = 0; i < epoch; i++) {
+        add << < gridSize, blockSize >> >(d_x, d_y, d_z, N);
+    }
 
     // 获取第二个时间点
     auto end = std::chrono::high_resolution_clock::now();
@@ -78,8 +83,9 @@ int main(int argc, char **argv)
 
     // 检查执行结果
     float maxError = 0.0;
-    for (int i = 0; i < N; i++)
+    for (int i = 0; i < N; i++) {
         maxError = fmax(maxError, fabs(z[i] - 30.0));
+    }
     std::cout << "最大误差: " << maxError << std::endl;
 
     // 释放device内存
