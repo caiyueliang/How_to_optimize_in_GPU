@@ -28,7 +28,7 @@ __global__ void matMulKernel(Matrix *A, Matrix *B, Matrix *C)
     int row = threadIdx.y + blockIdx.y * blockDim.y;
     int col = threadIdx.x + blockIdx.x * blockDim.x;
 
-    if (index % (1 << 8) == 0) {
+    if (row % (1 << 8) == 0 && col % (1 << 8) == 1) {
         printf("threadIdx.y:%d + blockIdx.y:%d * blockDim.y:%d = row:%d\n", 
             threadIdx.y, blockIdx.y, blockDim.y, row);
         printf("threadIdx.x:%d + blockIdx.x:%d * blockDim.x:%d = col:%d\n", 
