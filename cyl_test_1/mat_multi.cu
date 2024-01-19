@@ -31,17 +31,29 @@ __global__ void matMulKernel(Matrix *A, Matrix *B, Matrix *C)
     setElement(C, row, col, Cvalue);
 }
 
-int main()
+int main(int argc, char **argv)
 {
+    // 检查是否有足够的命令行参数
+    if (argc < 3) {
+        std::cerr << "Usage: " << argv[0] << " <block_len> <epoch>" << std::endl;
+        return 1;
+    }
+
+    // 获取并打印传入的参数
+    int block_len = std::atoi(argv[1]);
+    int epoch = std::atoi(argv[2]);
+    std::cout << "Parameter [block_len]: " << block_len << std::endl;
+    std::cout << "Parameter [epoch]: " << epoch << std::endl;
+
     int width = 1 << 10;
     int height = 1 << 10;
     Matrix *A, *B, *C;
     // 申请托管内存
-    cudaMallocManaged((void**)&A, sizeof(Matrix));
+    cudaMallocManaged((void**)&A, sizeof(Matrix));      // Matrix 也要用 cudaMallocManaged 申请内存。
     cudaMallocManaged((void**)&B, sizeof(Matrix));
     cudaMallocManaged((void**)&C, sizeof(Matrix));
     int nBytes = width * height * sizeof(float);
-    cudaMallocManaged((void**)&A->elements, nBytes);
+    cudaMallocManaged((void**)&A->elements, nBytes);    // Matrix 中的 elements 也要用 cudaMallocManaged 申请内存。
     cudaMallocManaged((void**)&B->elements, nBytes);
     cudaMallocManaged((void**)&C->elements, nBytes);
 
@@ -59,9 +71,13 @@ int main()
     }
 
     // 定义kernel的执行配置
-    dim3 blockSize(32, 32);
+    // dim3 blockSize(32, 32);     // 32 * 32 = 1024
+    dim3 blockSize(block_len, block_len);
     dim3 gridSize((width + blockSize.x - 1) / blockSize.x, 
         (height + blockSize.y - 1) / blockSize.y);
+    printf("Grid : {%d, %d, %d} blocks. Blocks : {%d, %d, %d} threads.\n",
+        gridSize.x, gridSize.y, gridSize.z, blockSize.x, blockSize.y, blockSize.z);
+
     // 执行kernel
     matMulKernel << < gridSize, blockSize >> >(A, B, C);
 
