@@ -27,6 +27,14 @@ __global__ void matMulKernel(Matrix *A, Matrix *B, Matrix *C)
     float Cvalue = 0.0;
     int row = threadIdx.y + blockIdx.y * blockDim.y;
     int col = threadIdx.x + blockIdx.x * blockDim.x;
+
+    if (index % (1 << 8) == 0) {
+        printf("threadIdx.y:%d + blockIdx.y:%d * blockDim.y:%d = row:%d\n", 
+            threadIdx.y, blockIdx.y, blockDim.y, row);
+        printf("threadIdx.x:%d + blockIdx.x:%d * blockDim.x:%d = col:%d\n", 
+            threadIdx.x, blockIdx.x, blockDim.x, col);
+    }
+
     for (int i = 0; i < A->width; ++i)
     {
         Cvalue += getElement(A, row, i) * getElement(B, i, col);

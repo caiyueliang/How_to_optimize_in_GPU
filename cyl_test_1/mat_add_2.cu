@@ -33,7 +33,7 @@ __global__ void add(float* x, float * y, float* z, int n)  // x,y,z 是指针，
     // for (int i = index; i < n; i += stride) {
     //     z[i] = x[i] + y[i];
     // }
-    // 用下面的指令也一样？
+    // stride == n，其实用下面的指令也一样？
     z[index] = x[index] + y[index];
 }
 
