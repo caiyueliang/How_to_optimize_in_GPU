@@ -7,26 +7,6 @@
 
 #define THREAD_PER_BLOCK 256
 
-__global__ void reduce0(float *d_in,float *d_out){
-    __shared__ float sdata[THREAD_PER_BLOCK];
-
-    // each thread loads one element from global to shared mem
-    unsigned int tid = threadIdx.x;
-    unsigned int i = blockIdx.x*blockDim.x + threadIdx.x;
-    sdata[tid] = d_in[i];
-    __syncthreads();
-
-    // do reduction in shared mem
-    for(unsigned int s=1; s < blockDim.x; s *= 2) {
-        if (tid % (2*s) == 0) {
-            sdata[tid] += sdata[tid + s];
-        }
-        __syncthreads();
-    }
-
-    // write result for this block to global mem
-    if (tid == 0) d_out[blockIdx.x] = sdata[0];
-}
 
 bool check(float *out,float *res,int n){
     for(int i=0;i<n;i++){
@@ -37,16 +17,21 @@ bool check(float *out,float *res,int n){
 }
 
 int main(){
-    const int N=32*1024*1024;
-    float *a=(float *)malloc(N*sizeof(float));
-    float *d_a;
-    cudaMalloc((void **)&d_a,N*sizeof(float));
+    const int N = 32 * 1024 * 1024;
+    int nBytes = N * sizeof(float);
+    // float *a = (float *)malloc(N*sizeof(float));
+    // float *d_a;
+    // cudaMalloc((void **)&d_a,N*sizeof(float));
+    float *a;
+    cudaMallocManaged((void**)&a, nBytes);
 
-    int block_num=N/THREAD_PER_BLOCK;
-    float *out=(float *)malloc((N/THREAD_PER_BLOCK)*sizeof(float));
-    float *d_out;
-    cudaMalloc((void **)&d_out,(N/THREAD_PER_BLOCK)*sizeof(float));
-    float *res=(float *)malloc((N/THREAD_PER_BLOCK)*sizeof(float));
+    int block_num = N / THREAD_PER_BLOCK;
+    // float *out=(float *)malloc((N/THREAD_PER_BLOCK)*sizeof(float));
+    // float *d_out;
+    // cudaMalloc((void **)&d_out,(N/THREAD_PER_BLOCK)*sizeof(float));
+    //float *res=(float *)malloc((N/THREAD_PER_BLOCK)*sizeof(float));
+    float *out;
+    cudaMallocManaged((void**)&out, block_num * sizeof(float))
 
     for(int i=0;i<N;i++){
         a[i]=1;
@@ -60,16 +45,18 @@ int main(){
         res[i]=cur;
     }
 
-    cudaMemcpy(d_a,a,N*sizeof(float),cudaMemcpyHostToDevice);
+    //cudaMemcpy(d_a,a,N*sizeof(float),cudaMemcpyHostToDevice);
 
-    dim3 Grid( N/THREAD_PER_BLOCK,1);
-    dim3 Block( THREAD_PER_BLOCK,1);
+    dim3 Grid(N/THREAD_PER_BLOCK,1);
+    dim3 Block(THREAD_PER_BLOCK,1);
 
-    reduce0<<<Grid,Block>>>(d_a,d_out);
+    reduce0<<<Grid, Block>>>(d_a, d_out);
 
-    cudaMemcpy(out,d_out,block_num*sizeof(float),cudaMemcpyDeviceToHost);
+    //cudaMemcpy(out,d_out,block_num*sizeof(float),cudaMemcpyDeviceToHost);
+    cudaDeviceSynchronize();
 
-    if(check(out,res,block_num))printf("the ans is right\n");
+    if(check(out,res,block_num))
+        printf("the ans is right\n");
     else{
         printf("the ans is wrong\n");
         for(int i=0;i<block_num;i++){
