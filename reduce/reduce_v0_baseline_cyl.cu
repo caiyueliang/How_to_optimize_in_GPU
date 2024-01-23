@@ -29,7 +29,7 @@ int main(){
     // float *out=(float *)malloc((N/THREAD_PER_BLOCK)*sizeof(float));
     // float *d_out;
     // cudaMalloc((void **)&d_out,(N/THREAD_PER_BLOCK)*sizeof(float));
-    //float *res=(float *)malloc((N/THREAD_PER_BLOCK)*sizeof(float));
+    float *res=(float *)malloc((block_num * sizeof(float));
     float *out;
     cudaMallocManaged((void**)&out, block_num * sizeof(float));
 
