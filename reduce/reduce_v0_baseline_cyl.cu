@@ -8,9 +8,9 @@
 #define THREAD_PER_BLOCK 256
 
 
-bool check(float *out,float *res,int n){
-    for(int i=0;i<n;i++){
-        if(out[i]!=res[i])
+bool check(float *out, float *res, int n) {
+    for (int i=0; i<n; i++) {
+        if (out[i] != res[i])
             return false;
     }
     return true;
@@ -50,7 +50,7 @@ int main(){
     dim3 Grid(N/THREAD_PER_BLOCK,1);
     dim3 Block(THREAD_PER_BLOCK,1);
 
-    reduce0<<<Grid, Block>>>(d_a, d_out);
+    reduce0<<<Grid, Block>>>(a, out);
 
     //cudaMemcpy(out,d_out,block_num*sizeof(float),cudaMemcpyDeviceToHost);
     cudaDeviceSynchronize();
