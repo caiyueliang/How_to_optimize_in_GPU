@@ -8,7 +8,8 @@
 #define THREAD_PER_BLOCK 256
 
 __global__ void reduce0(float*vec_in, float*vec_out) {
-    __shared__ float* shared_vec = THREAD_PER_BLOCK * sizeof(float);
+    //__shared__ float* shared_vec = THREAD_PER_BLOCK * sizeof(float);
+    __shared__ float shared_vec[THREAD_PER_BLOCK];
 
     int id = threadIdx.x;
     int tid = blockDim.x * blockIdx.x + threadIdx.x;
