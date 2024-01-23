@@ -7,6 +7,23 @@
 
 #define THREAD_PER_BLOCK 256
 
+__global__ void reduce0(float*vec_in, float*vec_out) {
+    __shared__ shared_vec = THREAD_PER_BLOCK * sizeof(float);
+
+    int id = threadIdx.x;
+    int tid = blockDim.x * blockIdx.x + threadIdx.x;
+    shared_vec[id] = vec_in[tid];
+
+    for (int n = 1; n < THREAD_PER_BLOCK; n = n * 2) {
+        if (id / n == 0) {
+            shared_vec[id] = shared_vec[id] + shared_vec[id + n];
+        }
+    }
+
+    if (id / THREAD_PER_BLOCK == 0) {
+        vec_out[id] = shared_vec[id];
+    }
+}
 
 bool check(float *out, float *res, int n) {
     for (int i=0; i<n; i++) {
