@@ -66,10 +66,10 @@ int main(){
     }
     else {
         printf("the ans is wrong\n");
-        for(int i=0; i<block_num; i++) {
-            printf("%lf ", out[i]);
-        }
-        printf("\n");
+        // for(int i=0; i<block_num; i++) {
+        //     printf("%lf ", out[i]);
+        // }
+        // printf("\n");
     }
 
     cudaFree(a);
