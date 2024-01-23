@@ -7,29 +7,6 @@
 
 #define THREAD_PER_BLOCK 256
 
-__global__ void reduce0(float *d_in,float *d_out) {
-    __shared__ float sdata[THREAD_PER_BLOCK];
-
-    // each thread loads one element from global to shared mem
-    unsigned int tid = threadIdx.x;
-    unsigned int i = blockIdx.x*blockDim.x + threadIdx.x;
-    sdata[tid] = d_in[i];
-    __syncthreads();
-
-    // do reduction in shared mem
-    for(unsigned int s=1; s < blockDim.x; s *= 2) {
-        if (tid % (2*s) == 0) {
-            sdata[tid] += sdata[tid + s];
-        }
-        __syncthreads();
-    }
-
-    // write result for this block to global mem
-    if (tid == 0) {
-        d_out[blockIdx.x] = sdata[0];
-    }
-}
-
 
 bool check(float *out, float *res, int n) {
     for (int i=0; i<n; i++) {
