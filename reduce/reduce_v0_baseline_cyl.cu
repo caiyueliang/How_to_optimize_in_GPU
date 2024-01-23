@@ -8,6 +8,7 @@
 #define THREAD_PER_BLOCK 256
 
 __global__ void reduce0(float* a, float* out) {
+    int i = Block.x;
 
 }
 
@@ -41,18 +42,19 @@ int main(){
         a[i]=1;
     }
 
-    for(int i=0;i<block_num;i++){
+    for(int i=0; i<block_num; i++) {
         float cur=0;
-        for(int j=0;j<THREAD_PER_BLOCK;j++){
+        for(int j=0; j<THREAD_PER_BLOCK; j++) {
             cur+=a[i*THREAD_PER_BLOCK+j];
         }
         res[i]=cur;
     }
+    printf("res[0]: %f, res[1]: %f", res[0], res[1]);
 
     //cudaMemcpy(d_a,a,N*sizeof(float),cudaMemcpyHostToDevice);
 
-    dim3 Grid(block_num, 1);
-    dim3 Block(THREAD_PER_BLOCK, 1);
+    dim3 Grid(block_num, 1);            // {131072, 1, 1}
+    dim3 Block(THREAD_PER_BLOCK, 1);    // {256, 1, 1}
     printf("Grid : {%d, %d, %d} blocks. Blocks : {%d, %d, %d} threads.\n",
         Grid.x, Grid.y, Grid.z, Block.x, Block.y, Block.z);
 
