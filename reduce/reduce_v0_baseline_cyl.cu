@@ -14,11 +14,13 @@ __global__ void reduce0(float*vec_in, float*vec_out) {
     int id = threadIdx.x;
     int tid = blockDim.x * blockIdx.x + threadIdx.x;
     shared_vec[id] = vec_in[tid];
+    __syncthreads();
 
     for (int n = 1; n < THREAD_PER_BLOCK; n = n * 2) {
         if (id / n == 0) {
             shared_vec[id] = shared_vec[id] + shared_vec[id + n];
         }
+        __syncthreads();
     }
 
     if (id / THREAD_PER_BLOCK == 0) {
