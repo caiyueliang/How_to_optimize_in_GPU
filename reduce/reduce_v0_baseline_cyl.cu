@@ -25,7 +25,7 @@ int main(){
     float *a;
     cudaMallocManaged((void**)&a, nBytes);
 
-    int block_num = N / THREAD_PER_BLOCK;
+    int block_num = N / THREAD_PER_BLOCK;   // 128 * 1024
     // float *out=(float *)malloc((N/THREAD_PER_BLOCK)*sizeof(float));
     // float *d_out;
     // cudaMalloc((void **)&d_out,(N/THREAD_PER_BLOCK)*sizeof(float));
@@ -47,8 +47,10 @@ int main(){
 
     //cudaMemcpy(d_a,a,N*sizeof(float),cudaMemcpyHostToDevice);
 
-    dim3 Grid(N/THREAD_PER_BLOCK, 1);
+    dim3 Grid(block_num, 1);
     dim3 Block(THREAD_PER_BLOCK, 1);
+    printf("Grid : {%d, %d, %d} blocks. Blocks : {%d, %d, %d} threads.\n",
+        Grid.x, Grid.y, Grid.z, Block.x, Block.y, Block.z);
 
     reduce0<<<Grid, Block>>>(a, out);
 
