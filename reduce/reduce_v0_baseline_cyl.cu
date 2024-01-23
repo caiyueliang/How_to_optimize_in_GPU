@@ -35,7 +35,8 @@ bool check(float *out, float *res, int n) {
 }
 
 int main(){
-    const int N = 32 * 1024 * 1024;
+    //const int N = 32 * 1024 * 1024;
+    const int N = 2 * 256;
     int nBytes = N * sizeof(float);
     // float *a = (float *)malloc(N*sizeof(float));
     // float *d_a;
