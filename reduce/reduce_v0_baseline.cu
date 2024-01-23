@@ -7,7 +7,7 @@
 
 #define THREAD_PER_BLOCK 256
 
-__global__ void reduce0(float *d_in,float *d_out){
+__global__ void reduce0(float *d_in,float *d_out) {
     __shared__ float sdata[THREAD_PER_BLOCK];
 
     // each thread loads one element from global to shared mem
@@ -25,7 +25,9 @@ __global__ void reduce0(float *d_in,float *d_out){
     }
 
     // write result for this block to global mem
-    if (tid == 0) d_out[blockIdx.x] = sdata[0];
+    if (tid == 0) {
+        d_out[blockIdx.x] = sdata[0];
+    }
 }
 
 bool check(float *out,float *res,int n){

@@ -7,9 +7,27 @@
 
 #define THREAD_PER_BLOCK 256
 
-__global__ void reduce0(float* a, float* out) {
-    // int i = Block.x;
+__global__ void reduce0(float *d_in,float *d_out) {
+    __shared__ float sdata[THREAD_PER_BLOCK];
 
+    // each thread loads one element from global to shared mem
+    unsigned int tid = threadIdx.x;
+    unsigned int i = blockIdx.x*blockDim.x + threadIdx.x;
+    sdata[tid] = d_in[i];
+    __syncthreads();
+
+    // do reduction in shared mem
+    for(unsigned int s=1; s < blockDim.x; s *= 2) {
+        if (tid % (2*s) == 0) {
+            sdata[tid] += sdata[tid + s];
+        }
+        __syncthreads();
+    }
+
+    // write result for this block to global mem
+    if (tid == 0) {
+        d_out[blockIdx.x] = sdata[0];
+    }
 }
 
 
@@ -49,7 +67,7 @@ int main(){
         }
         res[i]=cur;
     }
-    printf("res[0]: %f, res[1]: %f", res[0], res[1]);
+    printf("res[0]: %f, res[1]: %f \n", res[0], res[1]);
 
     //cudaMemcpy(d_a,a,N*sizeof(float),cudaMemcpyHostToDevice);
 
