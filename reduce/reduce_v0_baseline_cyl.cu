@@ -13,6 +13,15 @@ __global__ void reduce0(float*vec_in, float*vec_out) {
 
     int id = threadIdx.x;
     int tid = blockDim.x * blockIdx.x + threadIdx.x;
+    printf("threadIdx.x:%d = id:%d\n", 
+            threadIdx.x, id);
+    printf("blockDim.x:%d * blockIdx.x:%d + threadIdx.x:%d = tid:%d\n",
+            blockDim.x, blockIdx.x, threadIdx.x, tid);
+
+    // printf("threadIdx.x:%d + blockIdx.x:%d * blockDim.x:%d = index:%d\n", 
+    //         threadIdx.x, blockIdx.x, blockDim.x, index);
+    // printf("blockDim.x:%d * gridDim.x:%d = stride:%d\n",
+    //         blockDim.x, gridDim.x, stride);
     shared_vec[id] = vec_in[tid];
     __syncthreads();
 
