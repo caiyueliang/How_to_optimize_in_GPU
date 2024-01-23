@@ -31,9 +31,9 @@ int main(){
     // cudaMalloc((void **)&d_out,(N/THREAD_PER_BLOCK)*sizeof(float));
     //float *res=(float *)malloc((N/THREAD_PER_BLOCK)*sizeof(float));
     float *out;
-    cudaMallocManaged((void**)&out, block_num * sizeof(float))
+    cudaMallocManaged((void**)&out, block_num * sizeof(float));
 
-    for(int i=0;i<N;i++){
+    for(int i=0; i<N; i++) {
         a[i]=1;
     }
 
@@ -47,24 +47,25 @@ int main(){
 
     //cudaMemcpy(d_a,a,N*sizeof(float),cudaMemcpyHostToDevice);
 
-    dim3 Grid(N/THREAD_PER_BLOCK,1);
-    dim3 Block(THREAD_PER_BLOCK,1);
+    dim3 Grid(N/THREAD_PER_BLOCK, 1);
+    dim3 Block(THREAD_PER_BLOCK, 1);
 
     reduce0<<<Grid, Block>>>(a, out);
 
     //cudaMemcpy(out,d_out,block_num*sizeof(float),cudaMemcpyDeviceToHost);
     cudaDeviceSynchronize();
 
-    if(check(out,res,block_num))
+    if(check(out, res, block_num)) {
         printf("the ans is right\n");
-    else{
+    }
+    else {
         printf("the ans is wrong\n");
-        for(int i=0;i<block_num;i++){
-            printf("%lf ",out[i]);
+        for(int i=0; i<block_num; i++) {
+            printf("%lf ", out[i]);
         }
         printf("\n");
     }
 
-    cudaFree(d_a);
-    cudaFree(d_out);
+    cudaFree(a);
+    cudaFree(out);
 }
