@@ -8,7 +8,7 @@
 #define THREAD_PER_BLOCK 256
 
 __global__ void reduce0(float* a, float* out) {
-    int i = Block.x;
+    // int i = Block.x;
 
 }
 
