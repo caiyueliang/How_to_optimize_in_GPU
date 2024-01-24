@@ -4,6 +4,7 @@
 #include "device_launch_parameters.h"
 #include <time.h>
 #include <sys/time.h>
+#include <iostream>
 
 #define THREAD_PER_BLOCK 256
 
@@ -50,9 +51,21 @@ bool check(float *out, float *res, int n) {
     return true;
 }
 
-int main(){
+int main(int argc, char **argv) {
+    // 检查是否有足够的命令行参数
+    if (argc < 2) {
+        std::cerr << "Usage: " << argv[0] << "<block_num>" << std::endl;
+        return 1;
+    }
+
+    // 获取并打印传入的参数
+    int block_num = std::atoi(argv[1]);
+    int block_size = std::atoi(argv[2]);
+    std::cout << "Parameter [block_num]: " << block_num << std::endl;
+    // std::cout << "Parameter [block_size]: " << block_size << std::endl;
+
     //const int N = 32 * 1024 * 1024;
-    const int N = 32 * 256;
+    const int N = block_num * THREAD_PER_BLOCK;
     int nBytes = N * sizeof(float);
     printf("N: %d, nBytes: %d \n", N, nBytes);
 
@@ -62,7 +75,7 @@ int main(){
     float *a;
     cudaMallocManaged((void**)&a, nBytes);
 
-    int block_num = N / THREAD_PER_BLOCK;   // 128 * 1024
+    // int block_num = N / THREAD_PER_BLOCK;   // 128 * 1024
     // float *out=(float *)malloc((N/THREAD_PER_BLOCK)*sizeof(float));
     // float *d_out;
     // cudaMalloc((void **)&d_out,(N/THREAD_PER_BLOCK)*sizeof(float));
