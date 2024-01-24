@@ -6,11 +6,11 @@
 #include <sys/time.h>
 #include <iostream>
 
-#define THREAD_PER_BLOCK 256
+// #define THREAD_PER_BLOCK 256
 
 __global__ void reduce0(float*vec_in, float*vec_out) {
     //__shared__ float* shared_vec = THREAD_PER_BLOCK * sizeof(float);
-    __shared__ float shared_vec[THREAD_PER_BLOCK];          // 由__shared__修饰的变量。block内的线程共享。
+    __shared__ float shared_vec[blockDim.x];          // 由__shared__修饰的变量。block内的线程共享。
 
     int id = threadIdx.x;
     int tid = blockDim.x * blockIdx.x + threadIdx.x;
@@ -54,18 +54,18 @@ bool check(float *out, float *res, int n) {
 int main(int argc, char **argv) {
     // 检查是否有足够的命令行参数
     if (argc < 2) {
-        std::cerr << "Usage: " << argv[0] << "<block_num>" << std::endl;
+        std::cerr << "Usage: " << argv[0] << "<block_num> <block_size>" << std::endl;
         return 1;
     }
 
     // 获取并打印传入的参数
     int block_num = std::atoi(argv[1]);
-    //int block_size = std::atoi(argv[2]);
+    int block_size = std::atoi(argv[2]);
     std::cout << "Parameter [block_num]: " << block_num << std::endl;
-    // std::cout << "Parameter [block_size]: " << block_size << std::endl;
+    std::cout << "Parameter [block_size]: " << block_size << std::endl;
 
     //const int N = 32 * 1024 * 1024;
-    const int N = block_num * THREAD_PER_BLOCK;
+    const int N = block_num * block_size;
     int nBytes = N * sizeof(float);
     printf("N: %d, nBytes: %d \n", N, nBytes);
 
@@ -87,19 +87,19 @@ int main(int argc, char **argv) {
         a[i]=1;
     }
 
-    for(int i=0; i<block_num; i++) {
-        float cur=0;
-        for(int j=0; j<THREAD_PER_BLOCK; j++) {
-            cur+=a[i*THREAD_PER_BLOCK+j];
+    for(int i = 0; i < block_num; i ++) {
+        float cur = 0;
+        for(int j = 0; j < block_size; j++) {
+            cur += a[i * block_size + j];
         }
-        res[i]=cur;
+        res[i] = cur;
     }
     printf("res[0]: %f, res[1]: %f \n", res[0], res[1]);
 
     //cudaMemcpy(d_a,a,N*sizeof(float),cudaMemcpyHostToDevice);
 
     dim3 Grid(block_num, 1);            // {131072, 1, 1}
-    dim3 Block(THREAD_PER_BLOCK, 1);    // {256, 1, 1}
+    dim3 Block(block_size, 1);          // {256, 1, 1}
     printf("Grid : {%d, %d, %d} blocks. Blocks : {%d, %d, %d} threads.\n",
         Grid.x, Grid.y, Grid.z, Block.x, Block.y, Block.z);
 
