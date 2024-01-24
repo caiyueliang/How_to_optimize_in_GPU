@@ -60,7 +60,7 @@ int main(int argc, char **argv) {
 
     // 获取并打印传入的参数
     int block_num = std::atoi(argv[1]);
-    int block_size = std::atoi(argv[2]);
+    //int block_size = std::atoi(argv[2]);
     std::cout << "Parameter [block_num]: " << block_num << std::endl;
     // std::cout << "Parameter [block_size]: " << block_size << std::endl;
 
