@@ -13,7 +13,7 @@ __global__ void reduce0(float*vec_in, float*vec_out) {
 
     int id = threadIdx.x;
     int tid = blockDim.x * blockIdx.x + threadIdx.x;
-    printf("threadIdx.x:%d = id:%d \n blockDim.x:%d * blockIdx.x:%d + threadIdx.x:%d = tid:%d\n", 
+    printf("threadIdx.x:%d = id:%d ; blockDim.x:%d * blockIdx.x:%d + threadIdx.x:%d = tid:%d\n", 
             threadIdx.x, id, blockDim.x, blockIdx.x, threadIdx.x, tid);
     // printf("threadIdx.x:%d + blockIdx.x:%d * blockDim.x:%d = index:%d\n", 
     //         threadIdx.x, blockIdx.x, blockDim.x, index);
