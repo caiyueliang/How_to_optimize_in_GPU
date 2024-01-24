@@ -49,8 +49,8 @@ bool check(float *out, float *res, int n) {
 }
 
 int main(){
-    //const int N = 32 * 1024 * 1024;
-    const int N = 4 * 256;
+    const int N = 32 * 1024 * 1024;
+    //const int N = 1024 * 1024;
     int nBytes = N * sizeof(float);
     printf("N: %d, nBytes: %d \n", N, nBytes);
 
