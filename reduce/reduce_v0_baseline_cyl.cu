@@ -46,6 +46,8 @@ int main(){
     //const int N = 32 * 1024 * 1024;
     const int N = 2 * 256;
     int nBytes = N * sizeof(float);
+    printf("N: %d, nBytes: %d \n", N, nBytes);
+
     // float *a = (float *)malloc(N*sizeof(float));
     // float *d_a;
     // cudaMalloc((void **)&d_a,N*sizeof(float));
