@@ -30,7 +30,9 @@ __global__ void reduce0(float*vec_in, float*vec_out) {
     }
 
     if (tid % blockDim.x == 0) {
-        printf("[last] id:%d ; tid:%d\n", id, tid);
+        for (int n = 0; n < blockDim.x; n ++) {
+            printf("[last] id: %d ; tid: %d; shared_vec[%d]: %lf\n", id, tid, n, shared_vec[n]);
+        }
         vec_out[id] = shared_vec[id];
     }
 }
