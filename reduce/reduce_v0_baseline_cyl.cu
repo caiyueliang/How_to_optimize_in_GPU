@@ -106,7 +106,7 @@ int main(int argc, char **argv) {
         Grid.x, Grid.y, Grid.z, Block.x, Block.y, Block.z);
 
     // const int b_size = block_size;
-    reduce0<block_size><<<Grid, Block>>>(a, out);
+    reduce0<256><<<Grid, Block>>>(a, out);
 
     // cudaMemcpy(out,d_out,block_num*sizeof(float),cudaMemcpyDeviceToHost);
     cudaDeviceSynchronize();
