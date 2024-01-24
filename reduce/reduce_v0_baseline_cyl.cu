@@ -23,7 +23,7 @@ __global__ void reduce0(float*vec_in, float*vec_out) {
     __syncthreads();
 
     for (int n = 1; n < THREAD_PER_BLOCK; n = n * 2) {
-        if (id / n == 0) {
+        if (id % n == 0) {
             shared_vec[id] = shared_vec[id] + shared_vec[id + n];
         }
         __syncthreads();
