@@ -30,9 +30,9 @@ __global__ void reduce0(float*vec_in, float*vec_out) {
     }
 
     if (tid % blockDim.x == 0) {
-        for (int n = 0; n < blockDim.x; n ++) {
-            printf("[last] id: %d ; tid: %d; shared_vec[%d]: %lf\n", id, tid, n, shared_vec[n]);
-        }
+        // for (int n = 0; n < blockDim.x; n ++) {
+        //     printf("[last] id: %d ; tid: %d; shared_vec[%d]: %lf\n", id, tid, n, shared_vec[n]);
+        // }
         vec_out[int(tid/blockDim.x)] = shared_vec[id];
     }
 }
@@ -47,7 +47,7 @@ bool check(float *out, float *res, int n) {
 
 int main(){
     //const int N = 32 * 1024 * 1024;
-    const int N = 2 * 256;
+    const int N = 4 * 256;
     int nBytes = N * sizeof(float);
     printf("N: %d, nBytes: %d \n", N, nBytes);
 
