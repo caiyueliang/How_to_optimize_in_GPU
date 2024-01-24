@@ -8,10 +8,11 @@
 
 // #define THREAD_PER_BLOCK 256
 
-__global__ void reduce0(float*vec_in, float*vec_out, int block_size) {
+template <int SIZE>
+__global__ void reduce0(float*vec_in, float*vec_out) {
     //__shared__ float* shared_vec = THREAD_PER_BLOCK * sizeof(float);
     //__shared__ float shared_vec[THREAD_PER_BLOCK];            // 由__shared__修饰的变量。block内的线程共享。
-    __shared__ float shared_vec[block_size];                    // 由__shared__修饰的变量。block内的线程共享。
+    __shared__ float shared_vec[SIZE];                    // 由__shared__修饰的变量。block内的线程共享。
 
     int id = threadIdx.x;
     int tid = blockDim.x * blockIdx.x + threadIdx.x;
@@ -104,10 +105,10 @@ int main(int argc, char **argv) {
     printf("Grid : {%d, %d, %d} blocks. Blocks : {%d, %d, %d} threads.\n",
         Grid.x, Grid.y, Grid.z, Block.x, Block.y, Block.z);
 
-    const int b_size = block_size;
-    reduce0<<<Grid, Block>>>(a, out, b_size);
+    // const int b_size = block_size;
+    reduce0<block_size><<<Grid, Block>>>(a, out);
 
-    //cudaMemcpy(out,d_out,block_num*sizeof(float),cudaMemcpyDeviceToHost);
+    // cudaMemcpy(out,d_out,block_num*sizeof(float),cudaMemcpyDeviceToHost);
     cudaDeviceSynchronize();
 
     if(check(out, res, block_num)) {
