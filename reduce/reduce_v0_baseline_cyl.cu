@@ -10,7 +10,9 @@
 
 __global__ void reduce0(float*vec_in, float*vec_out, int block_size) {
     //__shared__ float* shared_vec = THREAD_PER_BLOCK * sizeof(float);
-    __shared__ float shared_vec[block_size];          // 由__shared__修饰的变量。block内的线程共享。
+    //__shared__ float shared_vec[THREAD_PER_BLOCK];          // 由__shared__修饰的变量。block内的线程共享。
+    const int b_size = block_size;
+    __shared__ float shared_vec[b_size];          // 由__shared__修饰的变量。block内的线程共享。
 
     int id = threadIdx.x;
     int tid = blockDim.x * blockIdx.x + threadIdx.x;
