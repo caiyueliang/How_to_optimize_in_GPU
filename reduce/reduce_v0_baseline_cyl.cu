@@ -6,7 +6,7 @@
 #include <sys/time.h>
 #include <iostream>
 
-// #define THREAD_PER_BLOCK 256
+#define THREAD_PER_BLOCK 256
 
 template <int SIZE>
 __global__ void reduce0(float*vec_in, float*vec_out) {
@@ -105,10 +105,9 @@ int main(int argc, char **argv) {
     printf("Grid : {%d, %d, %d} blocks. Blocks : {%d, %d, %d} threads.\n",
         Grid.x, Grid.y, Grid.z, Block.x, Block.y, Block.z);
 
-    // const int b_size = block_size;
-    reduce0<256><<<Grid, Block>>>(a, out);
+    reduce0<THREAD_PER_BLOCK><<<Grid, Block>>>(a, out, b_size);
 
-    // cudaMemcpy(out,d_out,block_num*sizeof(float),cudaMemcpyDeviceToHost);
+    //cudaMemcpy(out,d_out,block_num*sizeof(float),cudaMemcpyDeviceToHost);
     cudaDeviceSynchronize();
 
     if(check(out, res, block_num)) {
