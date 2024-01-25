@@ -105,7 +105,7 @@ int main(int argc, char **argv) {
     printf("Grid : {%d, %d, %d} blocks. Blocks : {%d, %d, %d} threads.\n",
         Grid.x, Grid.y, Grid.z, Block.x, Block.y, Block.z);
 
-    reduce0<THREAD_PER_BLOCK><<<Grid, Block>>>(a, out, b_size);
+    reduce0<THREAD_PER_BLOCK><<<Grid, Block>>>(a, out);
 
     //cudaMemcpy(out,d_out,block_num*sizeof(float),cudaMemcpyDeviceToHost);
     cudaDeviceSynchronize();
