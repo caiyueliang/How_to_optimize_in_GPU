@@ -18,16 +18,34 @@ __global__ void reduce1(float *d_in,float *d_out){
     __syncthreads();
 
     // do reduction in shared mem
+    // for(unsigned int s=1; s < blockDim.x; s *= 2) {
+    //     if (tid % (2*s) == 0) {
+    //         sdata[tid] += sdata[tid + s];
+    //     }
+    //     __syncthreads();
+    // }
+    // ------------------------------
+    // 对tid进行了计算，使判断的值变大。
+    // 原本：第tid个线程，操作第tid个数据。
+    // 修改后：第tid个线程，操作第index (2 * s * tid)个数据。
+    // 虽然代码依旧存在着if语句，但是却与reduce0代码有所不同。
+    // 我们继续假定block中存在256个thread，即拥有: 256 / 32 = 8个warp。
+    // - 当进行第1次迭代时，0-3号（前4个） warp 的index < blockDim.x(即256)， 4-7号（后4个）warp的 index >= blockDim.x。对于每个warp而言，都只是进入到一个分支内，所以并不会存在warp divergence的情况。
+    // - 当进行第2次迭代时，0、1号两个warp进入计算分支。
+    // - 当进行第3次迭代时，只有0号warp进入计算分支。
+    // - 当进行第4次迭代时，只有0号warp的前16个线程进入分支。
     for(unsigned int s=1; s < blockDim.x; s *= 2) {
-        int index = 2 * s * tid;
-        if (index < blockDim.x) {
+        int index = 2 * s * tid;                    // 2 * [1,2,4,...] * [0~255]
+        if (index < blockDim.x) {                   // blockDim.x = 256
             sdata[index] += sdata[index + s];
         }
         __syncthreads();
     }
 
     // write result for this block to global mem
-    if (tid == 0) d_out[blockIdx.x] = sdata[0];
+    if (tid == 0) {
+        d_out[blockIdx.x] = sdata[0];
+    }
 }
 
 bool check(float *out,float *res,int n){
