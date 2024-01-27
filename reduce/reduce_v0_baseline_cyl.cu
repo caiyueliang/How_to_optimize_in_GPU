@@ -88,6 +88,57 @@ __global__ void reduce0(float*vec_in, float*vec_out, int version) {
     }
 }
 
+__global__ void reduce6(float*vec_in, float*vec_out, int version) {
+    //__shared__ float* shared_vec = THREAD_PER_BLOCK * sizeof(float);
+    //__shared__ float shared_vec[THREAD_PER_BLOCK];            // 由__shared__修饰的变量。block内的线程共享。
+    extern  __shared__ float shared_vec[];                      // 由__shared__修饰的变量。block内的线程共享。长度由外部传入。
+
+    unsigned int tid = threadIdx.x;
+    unsigned int gid = blockDim.x * blockIdx.x + threadIdx.x;
+
+    // if (tid % blockDim.x == 0) {
+    //     printf("threadIdx.x:%d = id:%d ; blockDim.x:%d * blockIdx.x:%d + threadIdx.x:%d = tid:%d\n", 
+    //             threadIdx.x, id, blockDim.x, blockIdx.x, threadIdx.x, tid);
+    // }
+    shared_vec[tid] = vec_in[gid];
+    __syncthreads();
+
+    // ------------------------------------------------------------------------------------------
+    if (blockDim.x >= 512) {
+        if (tid < 256) {
+            shared_vec[tid] += shared_vec[tid + 256];
+        }
+        __syncthreads();
+    }
+    if (blockDim.x >= 256) {
+        if (tid < 128) {
+            shared_vec[tid] += shared_vec[tid + 128];
+        }
+        __syncthreads();
+    }
+    if (blockDim.x >= 128) {
+        if (tid < 64) {
+            shared_vec[tid] += shared_vec[tid + 64];
+        }
+        __syncthreads();
+    }
+    if (tid < 32) {
+        shared_vec = warpReduceSum(shared_vec)
+    }
+    // ------------------------------------------------------------------------------------------
+    // if (tid % blockDim.x == 0) {           // 这种写法和下面写法一样，目前没报错
+    //     vec_out[int(tid/blockDim.x)] = shared_vec[id];
+    //     // if (vec_out[int(tid/blockDim.x)] != 256.0) {
+    //     //     for (int n = 0; n < blockDim.x; n ++) {
+    //     //         printf("[last] id: %d ; tid: %d; shared_vec[%d]: %lf\n", id, tid, n, shared_vec[n]);
+    //     //     }
+    //     // }
+    // }
+    if (tid == 0) {
+        vec_out[blockIdx.x] = shared_vec[0];
+    }
+}
+
 template <typename T>
 T warpReduceSum(T val) {
     // T local_var = xxx;
