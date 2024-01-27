@@ -88,6 +88,15 @@ __global__ void reduce0(float*vec_in, float*vec_out, int version) {
     }
 }
 
+template <typename T>
+T warpReduceSum(T val) {
+    // T local_var = xxx;
+    for(int mask = 16; mask > 0; mask >> 1) {
+        local_var += __shfl_xor_sync(uint(-1), local_var, mask, 32);
+    }
+    return val;
+}
+
 bool check(float *out, float *res, int n) {
     for (int i=0; i<n; i++) {
         if (out[i] != res[i])
