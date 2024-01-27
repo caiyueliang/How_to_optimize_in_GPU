@@ -210,8 +210,8 @@ int main(int argc, char **argv) {
     printf("Grid : {%d, %d, %d} blocks. Blocks : {%d, %d, %d} threads.\n",
         Grid.x, Grid.y, Grid.z, Block.x, Block.y, Block.z);
 
-    reduce0<<<Grid, Block, block_size*sizeof(float)>>>(a, out, version);
-
+    // reduce0<<<Grid, Block, block_size*sizeof(float)>>>(a, out, version);
+    reduce6<<<Grid, Block, block_size*sizeof(float)>>>(a, out, version);
     //cudaMemcpy(out,d_out,block_num*sizeof(float),cudaMemcpyDeviceToHost);
     cudaDeviceSynchronize();
 
