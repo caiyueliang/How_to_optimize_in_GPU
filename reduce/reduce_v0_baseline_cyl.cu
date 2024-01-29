@@ -243,8 +243,8 @@ __global__ void reduce7(float *d_in, float *d_out, int n){
 
 // ===================================================================================================
 // reduce_v8_yangsheng版本:
-// template <typename T>
-__inline__ __device__ T warpReduceSum(T val) {
+template <typename T>
+__inline__ __device__ T warpReduceSum8(T val) {
     for (int mask = 16; mask > 0; mask >>= 1) {
         val += __shfl_xor_sync(0xffffffff, val, mask, 32);
     }
@@ -279,9 +279,9 @@ __global__ void reduce8(float*vec_in, float*vec_out) {
         }
         __syncthreads();
     }
+
     if (tid < 32) {
-        // shared_vec = warpReduceSum(shared_vec);
-        shared_vec = warpReduce<float*>(shared_vec, tid);
+        shared_vec = warpReduceSum8<float>(shared_vec);
     }
     // ------------------------------------------------------------------------------------------
     if (tid == 0) {
@@ -367,6 +367,9 @@ int main(int argc, char **argv) {
         // const int NUM_PER_BLOCK = N / block_num;
         // const int NUM_PER_THREAD = N / block_num / block_size;
         reduce7<THREAD_PER_BLOCK, 1><<<Grid, Block>>>(d_a, d_out, N);
+    } else if (version == 8) {   
+        
+    }
     } else {
         reduce0<<<Grid, Block, block_size*sizeof(float)>>>(d_a, d_out);
         reduce1<<<Grid, Block, block_size*sizeof(float)>>>(d_a, d_out);
