@@ -206,14 +206,14 @@ int main(int argc, char **argv) {
     int block_num = std::atoi(argv[1]);
     int block_size = std::atoi(argv[2]);
     int version = std::atoi(argv[3]);
-    std::cout << "Parameter  [block_num]: " << block_num << std::endl;
-    std::cout << "Parameter [block_size]: " << block_size << std::endl;
-    std::cout << "Parameter    [version]: " << version << std::endl;
+    // std::cout << "Parameter  [block_num]: " << block_num << std::endl;
+    // std::cout << "Parameter [block_size]: " << block_size << std::endl;
+    // std::cout << "Parameter    [version]: " << version << std::endl;
 
     //const int N = 32 * 1024 * 1024;
     const int N = block_num * block_size;
     int nBytes = N * sizeof(float);
-    printf("N: %d, nBytes: %d \n", N, nBytes);
+    // printf("N: %d, nBytes: %d \n", N, nBytes);
 
     // float *a = (float *)malloc(N*sizeof(float));
     // float *d_a;
@@ -240,14 +240,14 @@ int main(int argc, char **argv) {
         }
         res[i] = cur;
     }
-    printf("res[0]: %f, res[1]: %f \n", res[0], res[1]);
+    // printf("res[0]: %f, res[1]: %f \n", res[0], res[1]);
 
     //cudaMemcpy(d_a,a,N*sizeof(float),cudaMemcpyHostToDevice);
 
     dim3 Grid(block_num, 1);            // {131072, 1, 1}
     dim3 Block(block_size, 1);          // {256, 1, 1}
-    printf("Grid : {%d, %d, %d} blocks. Blocks : {%d, %d, %d} threads.\n",
-        Grid.x, Grid.y, Grid.z, Block.x, Block.y, Block.z);
+    // printf("Grid : {%d, %d, %d} blocks. Blocks : {%d, %d, %d} threads.\n",
+    //     Grid.x, Grid.y, Grid.z, Block.x, Block.y, Block.z);
 
     if (version == 0) {   
         reduce0<<<Grid, Block, block_size*sizeof(float)>>>(a, out);
