@@ -123,6 +123,27 @@ __global__ void reduce2(float*vec_in, float*vec_out) {
 }
 
 // ===================================================================================================
+// reduce_v3版本:
+__global__ void reduce3(float *d_in, float *d_out) {
+    extern __shared__ float sdata[];                    // 由__shared__修饰的变量。block内的线程共享。长度由外部传入。
+                 
+    //each thread loads one element from global memory to shared mem
+    unsigned int i=blockIdx.x*(blockDim.x*2)+threadIdx.x;
+    unsigned int tid=threadIdx.x;
+    sdata[tid]=d_in[i] + d_in[i+blockDim.x];            // 这里有区别
+    __syncthreads();
+
+    // do reduction in shared mem
+    for(unsigned int s=blockDim.x/2; s>0; s>>=1){
+        if(tid < s){
+            sdata[tid]+=sdata[tid+s];
+        }
+        __syncthreads();
+    }
+    
+    // write result for this block to global mem
+    if(tid==0)d_out[blockIdx.x]=sdata[tid];
+}
 
 // ===================================================================================================
 
@@ -255,12 +276,15 @@ int main(int argc, char **argv) {
         reduce1<<<Grid, Block, block_size*sizeof(float)>>>(d_a, d_out);
     } else if (version == 2) {   
         reduce2<<<Grid, Block, block_size*sizeof(float)>>>(d_a, d_out);
+    } else if (version == 3) {   
+        reduce3<<<Grid, Block, block_size*sizeof(float)>>>(d_a, d_out);
     } else if (version == 6) {   
         reduce6<<<Grid, Block, block_size*sizeof(float)>>>(d_a, d_out);
     } else {
         reduce0<<<Grid, Block, block_size*sizeof(float)>>>(d_a, d_out);
         reduce1<<<Grid, Block, block_size*sizeof(float)>>>(d_a, d_out);
         reduce2<<<Grid, Block, block_size*sizeof(float)>>>(d_a, d_out);
+        reduce3<<<Grid, Block, block_size*sizeof(float)>>>(d_a, d_out);
         reduce6<<<Grid, Block, block_size*sizeof(float)>>>(d_a, d_out);
     }
     cudaMemcpy(out, d_out, block_num*sizeof(float), cudaMemcpyDeviceToHost);
