@@ -87,15 +87,19 @@ int main(){
         res[i]=cur;
     }
 
+    cudaStream_t stream;            // 声明一个stream
+    cudaStreamCreate(&stream);      // 分配stream
+
     // cudaMemcpy(d_a,a,N*sizeof(float),cudaMemcpyHostToDevice);
 
     dim3 Grid( N/THREAD_PER_BLOCK,1);
     dim3 Block( THREAD_PER_BLOCK,1);
 
-    reduce0<<<Grid,Block>>>(a, out);
+    reduce0<<<Grid, Block, stream>>>(a, out);
 
     // cudaMemcpy(out,d_out,block_num*sizeof(float),cudaMemcpyDeviceToHost);
-    cudaDeviceSynchronize();
+    // cudaDeviceSynchronize();
+    cudaStreamSynchronize(stream);
 
     if(check(out,res,block_num))printf("the ans is right\n");
     else{
@@ -106,6 +110,7 @@ int main(){
         printf("\n");
     }
 
+    cudaStreamDestroy(stream);          // 取消分配的stream，在stream中的work完成后同步host端。
     cudaFree(a);
     cudaFree(out);
 }
