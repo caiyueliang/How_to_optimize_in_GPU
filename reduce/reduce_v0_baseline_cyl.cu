@@ -212,7 +212,7 @@ __device__ __forceinline__ float warpReduceSum(float sum) {
 }
 
 template <unsigned int blockSize, int NUM_PER_THREAD>
-__global__ void reduce7(float *d_in,float *d_out, unsigned int n){
+__global__ void reduce7(float *d_in,float *d_out, int n){
     float sum = 0;
 
     // each thread loads one element from global to shared mem
