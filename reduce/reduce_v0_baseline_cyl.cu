@@ -212,7 +212,7 @@ __device__ __forceinline__ float warpReduceSum(float sum) {
 }
 
 template <int blockSize, int NUM_PER_THREAD>
-__global__ void reduce7(float *d_in,float *d_out, int n){
+__global__ void reduce7(float *d_in, float *d_out, int n){
     float sum = 0;
 
     // each thread loads one element from global to shared mem
@@ -319,7 +319,7 @@ int main(int argc, char **argv) {
         // reduce7<><<<Grid, Block, block_size*sizeof(float)>>>(d_a, d_out);
         // const int NUM_PER_BLOCK = N / block_num;
         const int NUM_PER_THREAD = N / block_num / block_size;
-        reduce7<block_size, NUM_PER_THREAD><<<Grid,Block>>>(d_a, d_out, N);
+        reduce7<THREAD_PER_BLOCK, NUM_PER_THREAD><<<Grid,Block>>>(d_a, d_out, N);
     } else {
         reduce0<<<Grid, Block, block_size*sizeof(float)>>>(d_a, d_out);
         reduce1<<<Grid, Block, block_size*sizeof(float)>>>(d_a, d_out);
