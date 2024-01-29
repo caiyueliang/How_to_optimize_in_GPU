@@ -241,6 +241,53 @@ __global__ void reduce7(float *d_in, float *d_out, int n){
     if (tid == 0) d_out[blockIdx.x] = sum;
 }
 
+// ===================================================================================================
+// reduce_v8_yangsheng版本:
+// template <typename T>
+__inline__ __device__ T warpReduceSum(T val) {
+    for (int mask = 16; mask > 0; mask >>= 1) {
+        val += __shfl_xor_sync(0xffffffff, val, mask, 32);
+    }
+    return val;
+}
+
+__global__ void reduce8(float*vec_in, float*vec_out) {
+    extern  __shared__ float shared_vec[];                      // 由__shared__修饰的变量。block内的线程共享。长度由外部传入。
+
+    unsigned int tid = threadIdx.x;
+    unsigned int gid = blockDim.x * blockIdx.x + threadIdx.x;
+
+    shared_vec[tid] = vec_in[gid];
+    __syncthreads();
+
+    // ------------------------------------------------------------------------------------------
+    if (blockDim.x >= 512) {
+        if (tid < 256) {
+            shared_vec[tid] += shared_vec[tid + 256];
+        }
+        __syncthreads();
+    }
+    if (blockDim.x >= 256) {
+        if (tid < 128) {
+            shared_vec[tid] += shared_vec[tid + 128];
+        }
+        __syncthreads();
+    }
+    if (blockDim.x >= 128) {
+        if (tid < 64) {
+            shared_vec[tid] += shared_vec[tid + 64];
+        }
+        __syncthreads();
+    }
+    if (tid < 32) {
+        // shared_vec = warpReduceSum(shared_vec);
+        shared_vec = warpReduce<float*>(shared_vec, tid);
+    }
+    // ------------------------------------------------------------------------------------------
+    if (tid == 0) {
+        vec_out[blockIdx.x] = shared_vec[0];
+    }
+}
 
 // ===================================================================================================
 bool check(float *out, float *res, int n) {
