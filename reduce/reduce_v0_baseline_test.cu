@@ -95,7 +95,7 @@ int main(){
     dim3 Grid( N/THREAD_PER_BLOCK,1);
     dim3 Block( THREAD_PER_BLOCK,1);
 
-    reduce0<<<Grid, Block, stream>>>(a, out);
+    reduce0<<<Grid, Block, 0, stream>>>(a, out);
 
     // cudaMemcpy(out,d_out,block_num*sizeof(float),cudaMemcpyDeviceToHost);
     // cudaDeviceSynchronize();
