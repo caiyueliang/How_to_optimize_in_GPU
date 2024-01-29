@@ -89,7 +89,7 @@ int main(){
 
     cudaStream_t stream;            // 声明一个stream
     cudaStreamCreate(&stream);      // 分配stream
-    cudaStreamCreateWithFlags(&stream, cudaStreamNonBlocking);      // 用于使并发不受人为控制（如MPI）
+    // cudaStreamCreateWithFlags(&stream, cudaStreamNonBlocking);      // 用于使并发不受人为控制（如MPI）
 
     // cudaMemcpy(d_a,a,N*sizeof(float),cudaMemcpyHostToDevice);
 
@@ -102,8 +102,9 @@ int main(){
     // cudaDeviceSynchronize();
     cudaStreamSynchronize(stream);
     
-    if(check(out,res,block_num))printf("the ans is right\n");
-    else{
+    if(check(out, res, block_num))
+        printf("the ans is right\n");
+    else {
         printf("the ans is wrong\n");
         for(int i=0;i<block_num;i++){
             printf("%lf ",out[i]);
