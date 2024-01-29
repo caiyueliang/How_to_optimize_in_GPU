@@ -299,7 +299,11 @@ int main(int argc, char **argv) {
     printf("Grid : {%d, %d, %d} blocks. Blocks : {%d, %d, %d} threads.\n",
         Grid.x, Grid.y, Grid.z, Block.x, Block.y, Block.z);
 
-    if (version == 6) {   
+    if (version == 1) {   
+        reduce1<<<Grid, Block, block_size*sizeof(float)>>>(a, out);
+    } else if (version == 2) {   
+        reduce2<<<Grid, Block, block_size*sizeof(float)>>>(a, out);
+    } else if (version == 6) {   
         reduce6<<<Grid, Block, block_size*sizeof(float)>>>(a, out, version);
     } else {
         reduce0<<<Grid, Block, block_size*sizeof(float)>>>(a, out, version);
