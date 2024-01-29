@@ -298,15 +298,14 @@ int main(int argc, char **argv) {
     printf("res[0]: %f, res[1]: %f \n", res[0], res[1]);
 
     // cudaMemcpy(d_a, a, N*sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemPrefetchAsync(a, nBytes, 0);         // 也必须要做拷贝，否则拷贝的时间会计入到首个reduce操作，结果不准确。
+    cudaDeviceSynchronize();
 
     dim3 Grid(block_num, 1);            // {131072, 1, 1}
     dim3 Block(block_size, 1);          // {256, 1, 1}
     printf("Grid : {%d, %d, %d} blocks. Blocks : {%d, %d, %d} threads.\n",
         Grid.x, Grid.y, Grid.z, Block.x, Block.y, Block.z);
 
-    reduce0<<<Grid, Block, block_size*sizeof(float)>>>(a, out);
-    reduce0<<<Grid, Block, block_size*sizeof(float)>>>(a, out);
-    
     if (version == 0) {   
         reduce0<<<Grid, Block, block_size*sizeof(float)>>>(a, out);
     } else if (version == 1) {   
