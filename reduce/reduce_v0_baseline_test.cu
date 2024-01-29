@@ -99,7 +99,8 @@ int main(){
 
     // cudaMemcpy(out,d_out,block_num*sizeof(float),cudaMemcpyDeviceToHost);
     // cudaDeviceSynchronize();
-    cudaStreamSynchronize(stream);
+    // cudaStreamSynchronize(stream);
+    cudaStreamDestroy(stream);          // 取消分配的stream，在stream中的work完成后同步host端。
 
     if(check(out,res,block_num))printf("the ans is right\n");
     else{
@@ -110,7 +111,7 @@ int main(){
         printf("\n");
     }
 
-    cudaStreamDestroy(stream);          // 取消分配的stream，在stream中的work完成后同步host端。
+
     cudaFree(a);
     cudaFree(out);
 }
