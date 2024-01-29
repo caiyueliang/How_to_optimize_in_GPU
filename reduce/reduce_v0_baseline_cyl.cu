@@ -13,14 +13,14 @@ __global__ void reduce0(float*vec_in, float*vec_out, int version) {
     //__shared__ float shared_vec[THREAD_PER_BLOCK];            // 由__shared__修饰的变量。block内的线程共享。
     extern  __shared__ float shared_vec[];                      // 由__shared__修饰的变量。block内的线程共享。长度由外部传入。
 
-    unsigned int id = threadIdx.x;
-    unsigned int tid = blockDim.x * blockIdx.x + threadIdx.x;
+    unsigned int tid = threadIdx.x;
+    unsigned int gid = blockDim.x * blockIdx.x + threadIdx.x;
 
-    // if (tid % blockDim.x == 0) {
-    //     printf("threadIdx.x:%d = id:%d ; blockDim.x:%d * blockIdx.x:%d + threadIdx.x:%d = tid:%d\n", 
-    //             threadIdx.x, id, blockDim.x, blockIdx.x, threadIdx.x, tid);
+    // if (gid % blockDim.x == 0) {
+    //     printf("threadIdx.x:%d = id:%d ; blockDim.x:%d * blockIdx.x:%d + threadIdx.x:%d = gid:%d\n", 
+    //             threadIdx.x, id, blockDim.x, blockIdx.x, threadIdx.x, gid);
     // }
-    shared_vec[id] = vec_in[tid];
+    shared_vec[tid] = vec_in[gid];
     __syncthreads();
 
     // ------------------------------------------------------------------------------------------
@@ -29,17 +29,17 @@ __global__ void reduce0(float*vec_in, float*vec_out, int version) {
         // v0版本问题: reduce0存在的最大问题就是warp divergent的问题。对于一个block而言，它所有的thread都是执行同一条指令。如果存在if-else这样的分支情况的话，thread会执行所有的分支。
         //              只是不满足条件的分支，所产生的结果不会记录下来。可以在上图中看到，在每一轮迭代中都会产生两个分支，分别是红色和橙色的分支。这严重影响了代码执行的效率。
         // v1解决方案: 解决的方式也比较明了，就是尽可能地让所有线程走到同一个分支里面。
-        //              对tid进行了计算，使判断的值变大。
-        //              原本：第tid个线程，操作第tid个数据。
-        //              修改后：第tid个线程，操作第index (2 * s * tid)个数据。
+        //              对 gid 进行了计算，使判断的值变大。
+        //              原本：第 gid 个线程，操作第 gid 个数据。
+        //              修改后：第 gid 个线程，操作第index (2 * s * gid)个数据。
         //              虽然代码依旧存在着if语句，但是却与reduce0代码有所不同。
         //              我们继续假定block中存在256个thread，即拥有: 256 / 32 = 8个warp。
         //              - 当进行第1次迭代时，0-3号（前4个） warp 的index < blockDim.x(即256)， 4-7号（后4个）warp的 index >= blockDim.x。对于每个warp而言，都只是进入到一个分支内，所以并不会存在warp divergence的情况。
         //              - 当进行第2次迭代时，0、1号两个warp进入计算分支。
         //              - 当进行第3次迭代时，只有0号warp进入计算分支。
         //              - 当进行第4次迭代时，只有0号warp的前16个线程进入分支。   
-        for(unsigned int s=1; s < blockDim.x; s *= 2) {
-            int index = 2 * s * id;                     // 2 * [1,2,4,...] * [0~255]
+        for(unsigned int s = 1; s < blockDim.x; s *= 2) {
+            int index = 2 * s * tid;                    // 2 * [1,2,4,...] * [0~255]
             if (index < blockDim.x) {                   // blockDim.x = 256
                 shared_vec[index] += shared_vec[index + s];
             }
@@ -58,39 +58,56 @@ __global__ void reduce0(float*vec_in, float*vec_out, int version) {
         //              - 第3轮迭代，0号线程load 0号元素和32号元素，接下来不写了，总之，一个warp load shared memory的一行。没有bank冲突。
         //              - 到了4轮迭代，0号线程load 0号元素和16号元素。那16号线程呢，16号线程啥也不干，因为s=16，16-31号线程啥也不干，跳过去了。
         for (unsigned int s=blockDim.x/2; s>0; s>>=1) { 
-            if (id < s) {
-                shared_vec[id] += shared_vec[id + s];
+            if (tid < s) {
+                shared_vec[tid] += shared_vec[tid + s];
             }
             __syncthreads();
         }
     } else {
         // reduce_baseline版本
         for (unsigned int n = 1; n < blockDim.x; n = n * 2) {
-            // if (id % n == 0) {               // 这样写，有bug
-            if (id % (n * 2) == 0) {            // 这样写，才是正确的
-                shared_vec[id] = shared_vec[id] + shared_vec[id + n];
+            // if (tid % n == 0) {               // 这样写，有bug
+            if (tid % (n * 2) == 0) {            // 这样写，才是正确的
+                shared_vec[tid] = shared_vec[tid] + shared_vec[tid + n];
             }
             __syncthreads();
         }
     }
 
     // ------------------------------------------------------------------------------------------
-    // if (tid % blockDim.x == 0) {           // 这种写法和下面写法一样，目前没报错
-    //     vec_out[int(tid/blockDim.x)] = shared_vec[id];
-    //     // if (vec_out[int(tid/blockDim.x)] != 256.0) {
+    // if (gid % blockDim.x == 0) {           // 这种写法和下面写法一样，目前没报错
+    //     vec_out[int(gid/blockDim.x)] = shared_vec[id];
+    //     // if (vec_out[int(gid/blockDim.x)] != 256.0) {
     //     //     for (int n = 0; n < blockDim.x; n ++) {
-    //     //         printf("[last] id: %d ; tid: %d; shared_vec[%d]: %lf\n", id, tid, n, shared_vec[n]);
+    //     //         printf("[last] id: %d ; gid: %d; shared_vec[%d]: %lf\n", id, gid, n, shared_vec[n]);
     //     //     }
     //     // }
     // }
-    if (id == 0) {
+    if (tid == 0) {
         vec_out[blockIdx.x] = shared_vec[0];
     }
 }
 
+template <typename T>
+T warpReduceSum(T val) {
+    // T local_var = xxx;
+    for(int mask = 16; mask > 0; mask >>= 1) {
+        val += __shfl_xor_sync(uint(-1), val, mask, 32);
+    }
+    return val;
+}
+
+template <unsigned int blockSize>
+__device__ void warpReduce(volatile float* cache, unsigned int tid){
+    if (blockSize >= 64)cache[tid]+=cache[tid+32];
+    if (blockSize >= 32)cache[tid]+=cache[tid+16];
+    if (blockSize >= 16)cache[tid]+=cache[tid+8];
+    if (blockSize >= 8)cache[tid]+=cache[tid+4];
+    if (blockSize >= 4)cache[tid]+=cache[tid+2];
+    if (blockSize >= 2)cache[tid]+=cache[tid+1];
+}
+
 __global__ void reduce6(float*vec_in, float*vec_out, int version) {
-    //__shared__ float* shared_vec = THREAD_PER_BLOCK * sizeof(float);
-    //__shared__ float shared_vec[THREAD_PER_BLOCK];            // 由__shared__修饰的变量。block内的线程共享。
     extern  __shared__ float shared_vec[];                      // 由__shared__修饰的变量。block内的线程共享。长度由外部传入。
 
     unsigned int tid = threadIdx.x;
@@ -123,7 +140,8 @@ __global__ void reduce6(float*vec_in, float*vec_out, int version) {
         __syncthreads();
     }
     if (tid < 32) {
-        shared_vec = warpReduceSum(shared_vec)
+        // shared_vec = warpReduceSum(shared_vec);
+        warpReduce<THREAD_PER_BLOCK>(shared_vec, tid);
     }
     // ------------------------------------------------------------------------------------------
     // if (tid % blockDim.x == 0) {           // 这种写法和下面写法一样，目前没报错
@@ -137,15 +155,6 @@ __global__ void reduce6(float*vec_in, float*vec_out, int version) {
     if (tid == 0) {
         vec_out[blockIdx.x] = shared_vec[0];
     }
-}
-
-template <typename T>
-T warpReduceSum(T val) {
-    // T local_var = xxx;
-    for(int mask = 16; mask > 0; mask >> 1) {
-        local_var += __shfl_xor_sync(uint(-1), local_var, mask, 32);
-    }
-    return val;
 }
 
 bool check(float *out, float *res, int n) {
@@ -210,8 +219,11 @@ int main(int argc, char **argv) {
     printf("Grid : {%d, %d, %d} blocks. Blocks : {%d, %d, %d} threads.\n",
         Grid.x, Grid.y, Grid.z, Block.x, Block.y, Block.z);
 
-    // reduce0<<<Grid, Block, block_size*sizeof(float)>>>(a, out, version);
-    reduce6<<<Grid, Block, block_size*sizeof(float)>>>(a, out, version);
+    if (version == 6) {   
+        reduce6<<<Grid, Block, block_size*sizeof(float)>>>(a, out, version);
+    } else {
+        reduce0<<<Grid, Block, block_size*sizeof(float)>>>(a, out, version);
+    }
     //cudaMemcpy(out,d_out,block_num*sizeof(float),cudaMemcpyDeviceToHost);
     cudaDeviceSynchronize();
 
