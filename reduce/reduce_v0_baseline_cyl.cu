@@ -197,39 +197,37 @@ bool check(float *out, float *res, int n) {
 
 int main(int argc, char **argv) {
     // 检查是否有足够的命令行参数
-    // if (argc < 3) {
-    //     std::cerr << "Usage: " << argv[0] << "<block_num> <block_size> <version>" << std::endl;
-    //     return 1;
-    // }
+    if (argc < 3) {
+        std::cerr << "Usage: " << argv[0] << "<block_num> <block_size> <version>" << std::endl;
+        return 1;
+    }
 
-    // // 获取并打印传入的参数
-    // int block_num = std::atoi(argv[1]);
-    // int block_size = std::atoi(argv[2]);
-    int block_size = THREAD_PER_BLOCK;
-    int version = 0;
-    // int version = std::atoi(argv[3]);
+    // 获取并打印传入的参数
+    int block_num = std::atoi(argv[1]);
+    int block_size = std::atoi(argv[2]);
+    int version = std::atoi(argv[3]);
     // std::cout << "Parameter  [block_num]: " << block_num << std::endl;
     // std::cout << "Parameter [block_size]: " << block_size << std::endl;
     // std::cout << "Parameter    [version]: " << version << std::endl;
 
-    const int N = 32 * 1024 * 1024;
-    //const int N = block_num * block_size;
+    //const int N = 32 * 1024 * 1024;
+    const int N = block_num * block_size;
     int nBytes = N * sizeof(float);
     // printf("N: %d, nBytes: %d \n", N, nBytes);
 
-    // float *a = (float *)malloc(N*sizeof(float));
-    // float *d_a;
-    // cudaMalloc((void **)&d_a,N*sizeof(float));
-    float *a;
-    cudaMallocManaged((void**)&a, nBytes);
+    float *a = (float *)malloc(nBytes);
+    float *d_a;
+    cudaMalloc((void **)&d_a, nBytes);
+    // float *a;
+    // cudaMallocManaged((void**)&a, nBytes);
 
-    int block_num = N / THREAD_PER_BLOCK;   // 3 * 256 * 1024
-    // float *out=(float *)malloc((N/THREAD_PER_BLOCK)*sizeof(float));
-    // float *d_out;
-    // cudaMalloc((void **)&d_out,(N/THREAD_PER_BLOCK)*sizeof(float));
+    // int block_num = N / THREAD_PER_BLOCK;   // 128 * 1024
+    float *out=(float *)malloc((block_num)*sizeof(float));
+    float *d_out;
+    cudaMalloc((void **)&d_out, (block_num)*sizeof(float));
     float *res=(float *)malloc(block_num * sizeof(float));
-    float *out;
-    cudaMallocManaged((void**)&out, block_num * sizeof(float));
+    // float *out;
+    // cudaMallocManaged((void**)&out, block_num * sizeof(float));
 
     for(int i=0; i<N; i++) {
         a[i]=1;
@@ -244,7 +242,7 @@ int main(int argc, char **argv) {
     }
     // printf("res[0]: %f, res[1]: %f \n", res[0], res[1]);
 
-    //cudaMemcpy(d_a,a,N*sizeof(float),cudaMemcpyHostToDevice);
+    cudaMemcpy(d_a, a, N*sizeof(float), cudaMemcpyHostToDevice);
 
     dim3 Grid(block_num, 1);            // {131072, 1, 1}
     dim3 Block(block_size, 1);          // {256, 1, 1}
@@ -252,21 +250,21 @@ int main(int argc, char **argv) {
     //     Grid.x, Grid.y, Grid.z, Block.x, Block.y, Block.z);
 
     if (version == 0) {   
-        reduce0<<<Grid, Block, block_size*sizeof(float)>>>(a, out);
+        reduce0<<<Grid, Block, block_size*sizeof(float)>>>(d_a, d_out);
     } else if (version == 1) {   
-        reduce1<<<Grid, Block, block_size*sizeof(float)>>>(a, out);
+        reduce1<<<Grid, Block, block_size*sizeof(float)>>>(d_a, d_out);
     } else if (version == 2) {   
-        reduce2<<<Grid, Block, block_size*sizeof(float)>>>(a, out);
+        reduce2<<<Grid, Block, block_size*sizeof(float)>>>(d_a, d_out);
     } else if (version == 6) {   
-        reduce6<<<Grid, Block, block_size*sizeof(float)>>>(a, out);
+        reduce6<<<Grid, Block, block_size*sizeof(float)>>>(d_a, d_out);
     } else {
-        reduce0<<<Grid, Block, block_size*sizeof(float)>>>(a, out);
-        reduce1<<<Grid, Block, block_size*sizeof(float)>>>(a, out);
-        reduce2<<<Grid, Block, block_size*sizeof(float)>>>(a, out);
-        reduce6<<<Grid, Block, block_size*sizeof(float)>>>(a, out);
+        reduce0<<<Grid, Block, block_size*sizeof(float)>>>(d_a, d_out);
+        reduce1<<<Grid, Block, block_size*sizeof(float)>>>(d_a, d_out);
+        reduce2<<<Grid, Block, block_size*sizeof(float)>>>(d_a, d_out);
+        reduce6<<<Grid, Block, block_size*sizeof(float)>>>(d_a, d_out);
     }
-    //cudaMemcpy(out,d_out,block_num*sizeof(float),cudaMemcpyDeviceToHost);
-    cudaDeviceSynchronize();
+    cudaMemcpy(out, d_out, block_num*sizeof(float), cudaMemcpyDeviceToHost);
+    // cudaDeviceSynchronize();
 
     if(check(out, res, block_num)) {
         printf("the ans is right\n");
