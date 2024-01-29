@@ -4,7 +4,6 @@
 #include "device_launch_parameters.h"
 #include <time.h>
 #include <sys/time.h>
-#include "error.cuh"
 #include <math.h>
 #include <stdio.h>
 
