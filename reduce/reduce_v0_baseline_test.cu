@@ -65,7 +65,7 @@ int main(){
     // float *d_a;
     // cudaMalloc((void **)&d_a,N*sizeof(float));
     float *a;
-    cudaMallocManaged((void**)&a, nBytes);
+    cudaMallocManaged((void**)&a, N*sizeof(float));
 
     int block_num=N/THREAD_PER_BLOCK;
     // float *out=(float *)malloc((N/THREAD_PER_BLOCK)*sizeof(float));
