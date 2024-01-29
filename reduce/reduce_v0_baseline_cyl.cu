@@ -213,7 +213,7 @@ int main(int argc, char **argv) {
     //const int N = 32 * 1024 * 1024;
     const int N = block_num * block_size;
     int nBytes = N * sizeof(float);
-    /printf("N: %d, nBytes: %d \n", N, nBytes);
+    printf("N: %d, nBytes: %d \n", N, nBytes);
 
     float *a = (float *)malloc(nBytes);
     float *d_a;
