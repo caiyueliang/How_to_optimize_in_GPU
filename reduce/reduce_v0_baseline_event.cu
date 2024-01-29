@@ -100,22 +100,22 @@ int main(){
 
 
     cudaEvent_t start, stop;
-    CHECK(cudaEventCreate(&start));
-    CHECK(cudaEventCreate(&stop));
-    CHECK(cudaEventRecord(start));
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    cudaEventRecord(start);
     cudaEventQuery(start);//此处不能用CHECK宏函数
 
     //需要计时的代码块
     reduce0<<<Grid, Block, 0, stream>>>(a, out);
 
-    CHECK(cudaEventRecord(stop));
-    CHECK(cudaEventSynchronize(stop));
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
     float elapsed_time;
-    CHECK(cudaEventElapsedTime(&elapsed_time, start, stop));
+    cudaEventElapsedTime(&elapsed_time, start, stop);
     printf("Time = %g ms .\n", elapsed_time);
 
-    CHECK(cudaEventDestroy(start));
-    CHECK(cudaEventDestroy(stop));
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
 
     // cudaMemcpy(out,d_out,block_num*sizeof(float),cudaMemcpyDeviceToHost);
     // cudaDeviceSynchronize();
