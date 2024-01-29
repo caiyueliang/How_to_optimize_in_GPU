@@ -201,7 +201,7 @@ __global__ void reduce6(float*vec_in, float*vec_out) {
 
 // ===================================================================================================
 // reduce_v7 版本:
-template <unsigned int blockSize>
+template <int blockSize>
 __device__ __forceinline__ float warpReduceSum(float sum) {
     if (blockSize >= 32)sum += __shfl_down_sync(0xffffffff, sum, 16); // 0-16, 1-17, 2-18, etc.
     if (blockSize >= 16)sum += __shfl_down_sync(0xffffffff, sum, 8);// 0-8, 1-9, 2-10, etc.
@@ -211,13 +211,13 @@ __device__ __forceinline__ float warpReduceSum(float sum) {
     return sum;
 }
 
-template <unsigned int blockSize, int NUM_PER_THREAD>
+template <int blockSize, int NUM_PER_THREAD>
 __global__ void reduce7(float *d_in,float *d_out, int n){
     float sum = 0;
 
     // each thread loads one element from global to shared mem
-    unsigned int tid = threadIdx.x;
-    unsigned int i = blockIdx.x * (blockSize * NUM_PER_THREAD) + threadIdx.x;
+    int tid = threadIdx.x;
+    int i = blockIdx.x * (blockSize * NUM_PER_THREAD) + threadIdx.x;
 
     #pragma unroll
     for(int iter=0; iter<NUM_PER_THREAD; iter++){
