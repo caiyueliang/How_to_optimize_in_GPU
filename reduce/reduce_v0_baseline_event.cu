@@ -4,6 +4,9 @@
 #include "device_launch_parameters.h"
 #include <time.h>
 #include <sys/time.h>
+#include "error.cuh"
+#include <math.h>
+#include <stdio.h>
 
 #define THREAD_PER_BLOCK 256
 
@@ -105,7 +108,7 @@ int main(){
 
     //需要计时的代码块
     reduce0<<<Grid, Block, 0, stream>>>(a, out);
-    
+
     CHECK(cudaEventRecord(stop));
     CHECK(cudaEventSynchronize(stop));
     float elapsed_time;
