@@ -128,6 +128,39 @@ __global__ void reduce1(float*vec_in, float*vec_out) {
 }
 
 // ===================================================================================================
+// reduce_v2版本:
+// v1版本问题: reduce_v1的最大问题是bank冲突。
+//              在第一次迭代中，0号线程需要去取 load shared memory的0号地址以及1号地址的数，然后写回到0号地址。而此时，这个warp中的16号线程，需要去取load shared memory中的32号地址和33号地址。可以发现，0号地址跟32号地址产生了2路的bank冲突。
+//              在第2次迭代中，0号线程需要去load shared memory中的0号地址和2号地址。这个warp中的8号线程需要load shared memory中的32号地址以及34号地址，16号线程需要load shared memory中的64号地址和68号地址，24号线程需要load shared memory中的96号地址和100号地址。又因为0、32、64、96号地址对应着同一个bank，所以此时产生了4路的bank冲突。
+//              现在，可以继续算下去，8路bank冲突，16路bank冲突。由于bank冲突，所以reduce1性能受限。下图说明了在load第一个数据时所产生的bank冲突。
+// v2解决方案: 解决bank冲突的方式就是把for循环逆着来。原来stride从0到256，现在stride从128到0。
+//              把目光继续看到这个for循环中，并且只分析0号warp。
+//              - 第1轮迭代：0号线程需要load shared memory的0号元素以及128号元素。1号线程需要load shared memory中的1号元素和129号元素。这一轮迭代中，在读取第一个数时，warp中的32个线程刚好load 一行shared memory数据。
+//              - 第2轮迭代：0号线程load 0号元素和64号元素，1号线程load 1号元素和65号元素。咦，也是这样，每次load shared memory的一行。
+//              - 第3轮迭代，0号线程load 0号元素和32号元素，接下来不写了，总之，一个warp load shared memory的一行。没有bank冲突。
+//              - 到了4轮迭代，0号线程load 0号元素和16号元素。那16号线程呢，16号线程啥也不干，因为s=16，16-31号线程啥也不干，跳过去了。
+__global__ void reduce2(float*vec_in, float*vec_out) {
+    extern  __shared__ float shared_vec[];                      // 由__shared__修饰的变量。block内的线程共享。长度由外部传入。
+
+    unsigned int tid = threadIdx.x;
+    unsigned int gid = blockDim.x * blockIdx.x + threadIdx.x;
+
+    shared_vec[tid] = vec_in[gid];
+    __syncthreads();
+
+    // ------------------------------------------------------------------------------------------
+    for (unsigned int s=blockDim.x/2; s>0; s>>=1) { 
+        if (tid < s) {
+            shared_vec[tid] += shared_vec[tid + s];
+        }
+        __syncthreads();
+    }
+
+    // ------------------------------------------------------------------------------------------
+    if (tid == 0) {
+        vec_out[blockIdx.x] = shared_vec[0];
+    }
+}
 
 // ===================================================================================================
 
