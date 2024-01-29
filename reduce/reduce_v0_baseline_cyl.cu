@@ -12,8 +12,8 @@
 // reduce0版本：baseline
 __global__ void reduce0(float*vec_in, float*vec_out) {
     //__shared__ float* shared_vec = THREAD_PER_BLOCK * sizeof(float);
-    __shared__ float shared_vec[THREAD_PER_BLOCK];            // 由__shared__修饰的变量。block内的线程共享。
-    //extern  __shared__ float shared_vec[];                      // 由__shared__修饰的变量。block内的线程共享。长度由外部传入。
+    //__shared__ float shared_vec[THREAD_PER_BLOCK];            // 由__shared__修饰的变量。block内的线程共享。
+    extern  __shared__ float shared_vec[];                      // 由__shared__修饰的变量。block内的线程共享。长度由外部传入。
 
     unsigned int tid = threadIdx.x;
     unsigned int gid = blockDim.x * blockIdx.x + threadIdx.x;
