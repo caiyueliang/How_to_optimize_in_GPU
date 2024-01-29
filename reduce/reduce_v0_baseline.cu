@@ -7,49 +7,48 @@
 
 #define THREAD_PER_BLOCK 256
 
-// __global__ void reduce0(float *d_in,float *d_out) {
-//     __shared__ float sdata[THREAD_PER_BLOCK];
+__global__ void reduce0(float *d_in,float *d_out) {
+    __shared__ float sdata[THREAD_PER_BLOCK];
 
-//     // each thread loads one element from global to shared mem
-//     unsigned int tid = threadIdx.x;
-//     unsigned int i = blockIdx.x*blockDim.x + threadIdx.x;
-//     sdata[tid] = d_in[i];
-//     __syncthreads();
-
-//     // do reduction in shared mem
-//     for(unsigned int s=1; s < blockDim.x; s *= 2) {
-//         if (tid % (2*s) == 0) {
-//             sdata[tid] += sdata[tid + s];
-//         }
-//         __syncthreads();
-//     }
-
-//     // write result for this block to global mem
-//     if (tid == 0) {
-//         d_out[blockIdx.x] = sdata[0];
-//     }
-// }
-
-__global__ void reduce0(float*vec_in, float*vec_out) {
-    __shared__ float shared_vec[THREAD_PER_BLOCK];            // 由__shared__修饰的变量。block内的线程共享。
-
+    // each thread loads one element from global to shared mem
     unsigned int tid = threadIdx.x;
-    unsigned int gid = blockDim.x * blockIdx.x + threadIdx.x;
-    shared_vec[tid] = vec_in[gid];
+    unsigned int i = blockIdx.x*blockDim.x + threadIdx.x;
+    sdata[tid] = d_in[i];
     __syncthreads();
-    // ------------------------------------------------------------------------------------------
-    // reduce_baseline版本
-    for (unsigned int n = 1; n < blockDim.x; n = n * 2) {
-        // if (tid % n == 0) {               // 这样写，有bug
-        if (tid % (n * 2) == 0) {            // 这样写，才是正确的
-            shared_vec[tid] = shared_vec[tid] + shared_vec[tid + n];
+
+    // do reduction in shared mem
+    for(unsigned int s=1; s < blockDim.x; s *= 2) {
+        if (tid % (2*s) == 0) {
+            sdata[tid] += sdata[tid + s];
         }
         __syncthreads();
     }
+
+    // write result for this block to global mem
     if (tid == 0) {
-        vec_out[blockIdx.x] = shared_vec[0];
+        d_out[blockIdx.x] = sdata[0];
     }
 }
+
+// __global__ void reduce0(float*vec_in, float*vec_out) {
+//     __shared__ float shared_vec[THREAD_PER_BLOCK];            // 由__shared__修饰的变量。block内的线程共享。
+
+//     unsigned int tid = threadIdx.x;
+//     unsigned int gid = blockDim.x * blockIdx.x + threadIdx.x;
+//     shared_vec[tid] = vec_in[gid];
+//     __syncthreads();
+//     // ------------------------------------------------------------------------------------------
+//     // reduce_baseline版本
+//     for (unsigned int n = 1; n < blockDim.x; n = n * 2) {
+//         if (tid % (n * 2) == 0) {            // 这样写，才是正确的
+//             shared_vec[tid] = shared_vec[tid] + shared_vec[tid + n];
+//         }
+//         __syncthreads();
+//     }
+//     if (tid == 0) {
+//         vec_out[blockIdx.x] = shared_vec[0];
+//     }
+// }
 
 bool check(float *out,float *res,int n){
     for(int i=0;i<n;i++){
