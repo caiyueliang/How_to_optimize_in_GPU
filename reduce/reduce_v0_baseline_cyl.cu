@@ -319,9 +319,6 @@ int main(int argc, char **argv) {
         // const int NUM_PER_BLOCK = N / block_num;
         // const int NUM_PER_THREAD = N / block_num / block_size;
         reduce7<THREAD_PER_BLOCK, 1><<<Grid, Block>>>(d_a, d_out, N);
-    } else if (version == 8) {   
-        
-    }
     } else {
         reduce0<<<Grid, Block, block_size*sizeof(float)>>>(d_a, d_out);
         reduce1<<<Grid, Block, block_size*sizeof(float)>>>(d_a, d_out);
