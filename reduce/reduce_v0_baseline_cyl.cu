@@ -281,7 +281,7 @@ __global__ void reduce8(float*vec_in, float*vec_out) {
     }
 
     if (tid < 32) {
-        shared_vec = warpReduceSum8<float>(shared_vec);
+        shared_vec = warpReduceSum8<float[]>(shared_vec);
     }
     // ------------------------------------------------------------------------------------------
     if (tid == 0) {
