@@ -311,8 +311,10 @@ int main(int argc, char** argv) {
     checkCudaErrors(cudaEventCreate(&start));
     checkCudaErrors(cudaEventCreate(&stop));
     float msecTotal = 0;
-    int nIter = 1000;
+    int nIter = 1000;           // 遍历了1000次，求平均
 
+    // =======================================================================================
+    // 运行自己写的 Sgemm
     checkCudaErrors(cudaMemcpy( d_C, h_C, bytes_C, cudaMemcpyHostToDevice));
     checkCudaErrors(cudaEventRecord(start));
     for (int run = 0 ; run < nIter; run ++ ) {
@@ -335,8 +337,8 @@ int main(int argc, char** argv) {
         msecPerMatrixMul[0],
         flopsPerMatrixMul);
 
-    // cublas
-    
+    // =======================================================================================
+    // 运行 cublas 的 Sgemm
     cublasHandle_t blas_handle;  
     cublasCreate(&blas_handle);
     float alpha = 1.0;
